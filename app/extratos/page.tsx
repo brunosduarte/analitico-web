@@ -39,8 +39,8 @@ export default function ExtratosPage() {
   
   // Lidar com mudanças nos select fields
   const handleSelectChange = (field: keyof ExtratoFiltros, value: string) => {
-    if (value === "") {
-      // Se o valor for vazio, remover este filtro
+    if (value === "all") {
+      // Se o valor for "all", remover este filtro
       setFiltros(prev => {
         const newFiltros = { ...prev };
         delete newFiltros[field];
@@ -98,14 +98,14 @@ export default function ExtratosPage() {
             </div>
             
             <Select
-              value={filtros.categoria || ""}
+              value={filtros.categoria || "all"}
               onValueChange={(value) => handleSelectChange("categoria", value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Categoria" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas categorias</SelectItem>
+                <SelectItem value="all">Todas categorias</SelectItem>
                 {categorias.map((categoria) => (
                   <SelectItem key={categoria} value={categoria}>
                     {categoria}
@@ -115,15 +115,15 @@ export default function ExtratosPage() {
             </Select>
             
             <Select
-              value={filtros.mes && filtros.ano ? `${filtros.mes}-${filtros.ano}` : ""}
+              value={filtros.mes && filtros.ano ? `${filtros.mes}-${filtros.ano}` : "all"}
               onValueChange={(value) => {
-                if (value) {
+                if (value && value !== "all") {
                   const [mes, ano] = value.split('-');
                   handleSelectChange("mes", mes);
                   handleSelectChange("ano", ano);
                 } else {
-                  handleSelectChange("mes", "");
-                  handleSelectChange("ano", "");
+                  handleSelectChange("mes", "all");
+                  handleSelectChange("ano", "all");
                 }
               }}
             >
@@ -131,7 +131,7 @@ export default function ExtratosPage() {
                 <SelectValue placeholder="Período" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos períodos</SelectItem>
+                <SelectItem value="all">Todos períodos</SelectItem>
                 {periodos.map((periodo) => (
                   <SelectItem key={`${periodo.mes}-${periodo.ano}`} value={`${periodo.mes}-${periodo.ano}`}>
                     {periodo.label}

@@ -24,7 +24,7 @@ import {
   AreaChart,
   Area
 } from "recharts";
-import { TrendingUp, TrendingDown, Users, FileText, Briefcase, Building, CreditCard, Activity } from "lucide-react";
+import { TrendingUp, TrendingDown, Users, Briefcase, Building, CreditCard, Activity, FileText } from "lucide-react";
 
 export default function DashboardPage() {
   const [periodo, setPeriodo] = useState<string>("");
@@ -53,7 +53,10 @@ export default function DashboardPage() {
   const totalExtratos = extratos.length;
   const totalRendimentos = extratos.reduce((sum, extrato) => sum + extrato.valorTotal, 0);
   const mediaRendimentos = totalExtratos > 0 ? totalRendimentos / totalExtratos : 0;
-  const totalTrabalhadores = Array.from(new Set(extratos.map(e => e.matricula))).length;
+  
+  // Usando o método size diretamente no Set em vez do operador spread
+  const matriculasSet = new Set(extratos.map(e => e.matricula));
+  const totalTrabalhadores = matriculasSet.size;
   
   // Cores para gráficos
   const COLORS = ['var(--color-1)', 'var(--color-2)', 'var(--color-3)', 'var(--color-4)', 'var(--color-5)'];
@@ -70,14 +73,14 @@ export default function DashboardPage() {
         
         <div className="w-full md:w-64">
           <Select
-            value={periodo}
+            value={periodo || "all"}
             onValueChange={setPeriodo}
           >
             <SelectTrigger>
               <SelectValue placeholder="Selecione um período" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os períodos</SelectItem>
+              <SelectItem value="all">Todos os períodos</SelectItem>
               {periodos.map((p) => (
                 <SelectItem key={`${p.mes}-${p.ano}`} value={`${p.mes}-${p.ano}`}>
                   {p.label}
