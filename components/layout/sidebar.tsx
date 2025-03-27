@@ -1,13 +1,8 @@
 // components/layout/sidebar.tsx
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { 
-  BarChart3Icon, 
-  FileTextIcon, 
-  HomeIcon, 
-  UploadIcon 
-} from 'lucide-react';
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { cn } from '@/lib/utils'
+import { BarChart3Icon, FileTextIcon, UploadIcon } from 'lucide-react'
 
 const items = [
   {
@@ -25,10 +20,10 @@ const items = [
     href: '/upload',
     icon: UploadIcon,
   },
-];
+]
 
 export function Sidebar() {
-  const pathname = usePathname();
+  const pathname = usePathname()
 
   return (
     <aside className="w-64 border-r h-[calc(100vh-4rem)] sticky top-16">
@@ -39,7 +34,7 @@ export function Sidebar() {
             href={item.href}
             className={cn(
               'flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted transition-colors',
-              pathname === item.href ? 'bg-muted' : ''
+              pathname === item.href ? 'bg-muted' : '',
             )}
           >
             <item.icon className="h-5 w-5" />
@@ -48,5 +43,5 @@ export function Sidebar() {
         ))}
       </div>
     </aside>
-  );
+  )
 }

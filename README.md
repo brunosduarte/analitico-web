@@ -1,1 +1,2 @@
 # analitico-web
+erros no frontend. 1) dashboard/page.tsx linha 15 "Module '"date-fns"' has no exported member 'DateRange'". 2) use-dashboard.ts linhas 88, 89, 87 e 98 "Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'", e linha 104 "'b' is of type 'unknown'."

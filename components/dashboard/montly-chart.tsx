@@ -1,46 +1,59 @@
 // components/dashboard/monthly-chart.tsx
-'use client';
+'use client'
 
-import { useExtratos } from '@/hooks/use-extratos';
-import { 
-  ResponsiveContainer, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend 
-} from 'recharts';
-import { formatCurrency } from '@/lib/utils';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useExtratos } from '@/hooks/use-extratos'
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from 'recharts'
+import { formatCurrency } from '@/lib/utils'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface MonthlyChartProps {
-  ano: string;
+  ano: string
 }
 
-const MESES_ORDEM = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+const MESES_ORDEM = [
+  'JAN',
+  'FEV',
+  'MAR',
+  'ABR',
+  'MAI',
+  'JUN',
+  'JUL',
+  'AGO',
+  'SET',
+  'OUT',
+  'NOV',
+  'DEZ',
+]
 const MESES_NOME = {
-  'JAN': 'Jan',
-  'FEV': 'Fev',
-  'MAR': 'Mar',
-  'ABR': 'Abr',
-  'MAI': 'Mai',
-  'JUN': 'Jun',
-  'JUL': 'Jul',
-  'AGO': 'Ago',
-  'SET': 'Set',
-  'OUT': 'Out',
-  'NOV': 'Nov',
-  'DEZ': 'Dez'
-};
+  JAN: 'Jan',
+  FEV: 'Fev',
+  MAR: 'Mar',
+  ABR: 'Abr',
+  MAI: 'Mai',
+  JUN: 'Jun',
+  JUL: 'Jul',
+  AGO: 'Ago',
+  SET: 'Set',
+  OUT: 'Out',
+  NOV: 'Nov',
+  DEZ: 'Dez',
+}
 
 export function MonthlyChart({ ano }: MonthlyChartProps) {
-  const { data: extratos, isLoading } = useExtratos({ ano });
+  const { data: extratos, isLoading } = useExtratos({ ano })
 
   // Se não temos dados, mostrar um skeleton
   if (isLoading) {
-    return <Skeleton className="h-[400px] w-full" />;
+    return <Skeleton className="h-[400px] w-full" />
   }
 
   if (!extratos?.length) {
@@ -48,21 +61,27 @@ export function MonthlyChart({ ano }: MonthlyChartProps) {
       <div className="h-[400px] w-full flex items-center justify-center text-muted-foreground">
         Nenhum dado disponível para o ano selecionado.
       </div>
-    );
+    )
   }
 
   // Agrupar dados por mês
-  const dadosPorMes = MESES_ORDEM.map(mes => {
-    const extratosMes = extratos.filter(e => e.mes === mes);
-    const valorTotal = extratosMes.reduce((total, extrato) => total + extrato.valorTotal, 0);
-    const totalTrabalhos = extratosMes.reduce((total, extrato) => total + extrato.totalTrabalhos, 0);
-    
+  const dadosPorMes = MESES_ORDEM.map((mes) => {
+    const extratosMes = extratos.filter((e) => e.mes === mes)
+    const valorTotal = extratosMes.reduce(
+      (total, extrato) => total + extrato.valorTotal,
+      0,
+    )
+    const totalTrabalhos = extratosMes.reduce(
+      (total, extrato) => total + extrato.totalTrabalhos,
+      0,
+    )
+
     return {
       nome: MESES_NOME[mes as keyof typeof MESES_NOME],
       valorTotal,
       totalTrabalhos,
-    };
-  }).filter(data => data.valorTotal > 0 || data.totalTrabalhos > 0);
+    }
+  }).filter((data) => data.valorTotal > 0 || data.totalTrabalhos > 0)
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -76,11 +95,11 @@ export function MonthlyChart({ ano }: MonthlyChartProps) {
             Trabalhos: {payload[1].value}
           </p>
         </div>
-      );
+      )
     }
-  
-    return null;
-  };
+
+    return null
+  }
 
   return (
     <div className="h-[400px] w-full">
@@ -95,22 +114,22 @@ export function MonthlyChart({ ano }: MonthlyChartProps) {
           <YAxis yAxisId="right" orientation="right" />
           <Tooltip content={<CustomTooltip />} />
           <Legend />
-          <Bar 
-            yAxisId="left" 
-            dataKey="valorTotal" 
-            name="Valor Total (R$)" 
-            fill="#6366f1" 
+          <Bar
+            yAxisId="left"
+            dataKey="valorTotal"
+            name="Valor Total (R$)"
+            fill="#6366f1"
             radius={[4, 4, 0, 0]}
           />
-          <Bar 
-            yAxisId="right" 
-            dataKey="totalTrabalhos" 
-            name="Número de Trabalhos" 
-            fill="#10b981" 
+          <Bar
+            yAxisId="right"
+            dataKey="totalTrabalhos"
+            name="Número de Trabalhos"
+            fill="#10b981"
             radius={[4, 4, 0, 0]}
           />
         </BarChart>
       </ResponsiveContainer>
     </div>
-  );
+  )
 }

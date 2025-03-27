@@ -1,53 +1,66 @@
 // components/dashboard/tomador-analysis.tsx
-'use client';
+'use client'
 
-import { useExtratos } from '@/hooks/use-extratos';
-import { useState, useEffect } from 'react';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer 
-} from 'recharts';
-import { Skeleton } from '@/components/ui/skeleton';
-import { formatCurrency } from '@/lib/utils';
+import { useExtratos } from '@/hooks/use-extratos'
+import { useState, useEffect } from 'react'
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts'
+import { Skeleton } from '@/components/ui/skeleton'
+import { formatCurrency } from '@/lib/utils'
 
 interface TomadorAnalysisProps {
-  mes: string;
-  ano: string;
+  mes: string
+  ano: string
 }
 
 export function TomadorAnalysis({ mes, ano }: TomadorAnalysisProps) {
-  const { data: extratos, isLoading } = useExtratos({ mes, ano });
-  const [tomadoresData, setTomadoresData] = useState<{ name: string; trabalhos: number; valor: number }[]>([]);
+  const { data: extratos, isLoading } = useExtratos({ mes, ano })
+  const [tomadoresData, setTomadoresData] = useState<
+    { name: string; trabalhos: number; valor: number }[]
+  >([])
 
   useEffect(() => {
-    if (!extratos) return;
+    if (!extratos) return
 
     // Criar uma estrutura para armazenar os dados agrupados por tomador
-    const tomadores: Record<string, { trabalhos: number; valor: number }> = {};
+    const tomadores: Record<string, { trabalhos: number; valor: number }> = {}
 
     // Iterar através de todos os extratos e seus trabalhos
-    extratos.forEach(extrato => {
+    extratos.forEach((extrato) => {
       // Aqui temos apenas um resumo do extrato, sem os trabalhos detalhados
       // Vamos usar apenas o valor total e o número de trabalhos
       // Em uma implementação real, você precisaria buscar os detalhes dos trabalhos
-      
+
       // Suposição: distribuir o valor e trabalhos de forma igual entre os tomadores (apenas para demonstração)
-      const tomadoresConhecidos = ['AGM', 'SAGRES', 'TECON', 'TERMASA', 'BIANCHINI', 'CTIL', 'RGLP'];
-      const tomadorAleatorio = tomadoresConhecidos[Math.floor(Math.random() * tomadoresConhecidos.length)];
-      
+      const tomadoresConhecidos = [
+        'AGM',
+        'SAGRES',
+        'TECON',
+        'TERMASA',
+        'BIANCHINI',
+        'CTIL',
+        'RGLP',
+      ]
+      const tomadorAleatorio =
+        tomadoresConhecidos[
+          Math.floor(Math.random() * tomadoresConhecidos.length)
+        ]
+
       if (!tomadores[tomadorAleatorio]) {
-        tomadores[tomadorAleatorio] = { trabalhos: 0, valor: 0 };
+        tomadores[tomadorAleatorio] = { trabalhos: 0, valor: 0 }
       }
-      
-      tomadores[tomadorAleatorio].trabalhos += extrato.totalTrabalhos;
-      tomadores[tomadorAleatorio].valor += extrato.valorTotal;
-    });
+
+      tomadores[tomadorAleatorio].trabalhos += extrato.totalTrabalhos
+      tomadores[tomadorAleatorio].valor += extrato.valorTotal
+    })
 
     // Converter para o formato esperado pelo gráfico e ordenar por número de trabalhos
     const dadosFormatados = Object.entries(tomadores)
@@ -56,13 +69,13 @@ export function TomadorAnalysis({ mes, ano }: TomadorAnalysisProps) {
         trabalhos: data.trabalhos,
         valor: data.valor,
       }))
-      .sort((a, b) => b.trabalhos - a.trabalhos);
+      .sort((a, b) => b.trabalhos - a.trabalhos)
 
-    setTomadoresData(dadosFormatados);
-  }, [extratos]);
+    setTomadoresData(dadosFormatados)
+  }, [extratos])
 
   if (isLoading) {
-    return <Skeleton className="h-[400px] w-full" />;
+    return <Skeleton className="h-[400px] w-full" />
   }
 
   if (!extratos?.length) {
@@ -70,7 +83,7 @@ export function TomadorAnalysis({ mes, ano }: TomadorAnalysisProps) {
       <div className="h-[400px] w-full flex items-center justify-center text-muted-foreground">
         Nenhum dado disponível para o período selecionado.
       </div>
-    );
+    )
   }
 
   if (tomadoresData.length === 0) {
@@ -78,7 +91,7 @@ export function TomadorAnalysis({ mes, ano }: TomadorAnalysisProps) {
       <div className="h-[400px] w-full flex items-center justify-center text-muted-foreground">
         Nenhum tomador identificado no período.
       </div>
-    );
+    )
   }
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -93,11 +106,11 @@ export function TomadorAnalysis({ mes, ano }: TomadorAnalysisProps) {
             Valor: {formatCurrency(payload[1].value)}
           </p>
         </div>
-      );
+      )
     }
-  
-    return null;
-  };
+
+    return null
+  }
 
   return (
     <div className="h-[400px] w-full">
@@ -117,5 +130,5 @@ export function TomadorAnalysis({ mes, ano }: TomadorAnalysisProps) {
         </BarChart>
       </ResponsiveContainer>
     </div>
-  );
+  )
 }

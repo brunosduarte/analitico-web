@@ -1,7 +1,13 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart3, FileText, Upload } from "lucide-react";
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { BarChart3, FileText, Upload } from 'lucide-react'
 
 export default function Home() {
   return (
@@ -14,19 +20,16 @@ export default function Home() {
                 Sistema de Extratos Portuários
               </h1>
               <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl/relaxed dark:text-gray-400">
-                Visualize, analise e gerencie extratos de trabalhadores portuários com facilidade.
+                Visualize, analise e gerencie extratos de trabalhadores
+                portuários com facilidade.
               </p>
             </div>
             <div className="space-x-4">
               <Button asChild>
-                <Link href="/dashboard">
-                  Ver Dashboard
-                </Link>
+                <Link href="/dashboard">Ver Dashboard</Link>
               </Button>
               <Button variant="outline" asChild>
-                <Link href="/extratos">
-                  Explorar Extratos
-                </Link>
+                <Link href="/extratos">Explorar Extratos</Link>
               </Button>
             </div>
           </div>
@@ -47,15 +50,16 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Gráficos e indicadores para acompanhar tendências de ganhos, distribuição
-                por categoria e dados sobre os principais tomadores de serviço.
+                Gráficos e indicadores para acompanhar tendências de ganhos,
+                distribuição por categoria e dados sobre os principais tomadores
+                de serviço.
               </p>
               <Button asChild className="w-full mt-4">
                 <Link href="/dashboard">Acessar Dashboard</Link>
               </Button>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center gap-4">
               <FileText className="h-8 w-8" />
@@ -68,29 +72,29 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Consulte extratos por matrícula, nome, categoria, período e mais.
-                Visualize detalhes como trabalhos realizados e rendimentos.
+                Consulte extratos por matrícula, nome, categoria, período e
+                mais. Visualize detalhes como trabalhos realizados e
+                rendimentos.
               </p>
               <Button asChild className="w-full mt-4">
                 <Link href="/extratos">Ver Extratos</Link>
               </Button>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center gap-4">
               <Upload className="h-8 w-8" />
               <div>
                 <CardTitle>Upload de Extratos</CardTitle>
-                <CardDescription>
-                  Importe novos extratos em PDF
-                </CardDescription>
+                <CardDescription>Importe novos extratos em PDF</CardDescription>
               </div>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Faça upload de extratos em PDF e tenha-os processados automaticamente pelo sistema,
-                tornando os dados disponíveis para consulta.
+                Faça upload de extratos em PDF e tenha-os processados
+                automaticamente pelo sistema, tornando os dados disponíveis para
+                consulta.
               </p>
               <Button asChild className="w-full mt-4">
                 <Link href="/upload">Fazer Upload</Link>
@@ -100,5 +104,5 @@ export default function Home() {
         </div>
       </section>
     </div>
-  );
+  )
 }

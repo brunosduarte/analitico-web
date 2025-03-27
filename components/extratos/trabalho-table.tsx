@@ -1,12 +1,19 @@
-"use client";
+'use client'
 
-import { Trabalho } from "@/types";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { formatCurrency } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
+import { Trabalho } from '@/types'
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from '@/components/ui/table'
+import { formatCurrency } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
 
 interface TrabalhoTableProps {
-  trabalhos: Trabalho[];
+  trabalhos: Trabalho[]
 }
 
 export function TrabalhoTable({ trabalhos }: TrabalhoTableProps) {
@@ -36,7 +43,10 @@ export function TrabalhoTable({ trabalhos }: TrabalhoTableProps) {
                   {trabalho.tomador}
                 </Badge>
               </TableCell>
-              <TableCell className="max-w-[150px] truncate" title={trabalho.pasta}>
+              <TableCell
+                className="max-w-[150px] truncate"
+                title={trabalho.pasta}
+              >
                 {trabalho.pasta}
               </TableCell>
               <TableCell>{trabalho.fun}</TableCell>
@@ -53,5 +63,5 @@ export function TrabalhoTable({ trabalhos }: TrabalhoTableProps) {
         </TableBody>
       </Table>
     </div>
-  );
+  )
 }

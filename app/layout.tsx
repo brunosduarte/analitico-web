@@ -1,21 +1,22 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
-import { Providers } from "@/components/provider";
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import './globals.css'
+import { Header } from '@/components/layout/header'
+import { Footer } from '@/components/layout/footer'
+import { Providers } from '@/components/provider'
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: "Extratos Portuários",
-  description: "Sistema de visualização e gestão de extratos de trabalhadores portuários",
-};
+  title: 'Extratos Portuários',
+  description:
+    'Sistema de visualização e gestão de extratos de trabalhadores portuários',
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
@@ -29,5 +30,5 @@ export default function RootLayout({
         </Providers>
       </body>
     </html>
-  );
+  )
 }

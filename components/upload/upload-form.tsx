@@ -1,114 +1,116 @@
 // components/upload/upload-form.tsx
-'use client';
+'use client'
 
-import { useState, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { 
-  UploadCloudIcon, 
-  FileIcon, 
-  Trash2Icon, 
+import { useState, useRef } from 'react'
+import { Button } from '@/components/ui/button'
+import {
+  UploadCloudIcon,
+  FileIcon,
+  Trash2Icon,
   AlertCircleIcon,
-  Loader2Icon
-} from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
+  Loader2Icon,
+} from 'lucide-react'
+import { Progress } from '@/components/ui/progress'
 
 interface UploadFormProps {
-  onUpload: (file: File) => Promise<void>;
-  isLoading: boolean;
+  onUpload: (file: File) => Promise<void>
+  isLoading: boolean
 }
 
 export function UploadForm({ onUpload, isLoading }: UploadFormProps) {
-  const [file, setFile] = useState<File | null>(null);
-  const [dragActive, setDragActive] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | null>(null)
+  const [dragActive, setDragActive] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [error, setError] = useState<string | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
+    e.preventDefault()
+    e.stopPropagation()
+
     if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true);
+      setDragActive(true)
     } else if (e.type === 'dragleave') {
-      setDragActive(false);
+      setDragActive(false)
     }
-  };
+  }
 
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFile(e.dataTransfer.files[0]);
+      handleFile(e.dataTransfer.files[0])
     }
-  };
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    
+    e.preventDefault()
+
     if (e.target.files && e.target.files[0]) {
-      handleFile(e.target.files[0]);
+      handleFile(e.target.files[0])
     }
-  };
+  }
 
   const handleFile = (file: File) => {
     if (file.type !== 'application/pdf') {
-      setError('Apenas arquivos PDF são permitidos.');
-      return;
+      setError('Apenas arquivos PDF são permitidos.')
+      return
     }
-    
-    if (file.size > 10 * 1024 * 1024) { // 10MB
-      setError('O arquivo não pode ser maior que 10MB.');
-      return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      // 10MB
+      setError('O arquivo não pode ser maior que 10MB.')
+      return
     }
-    
-    setError(null);
-    setFile(file);
-  };
+
+    setError(null)
+    setFile(file)
+  }
 
   const handleRemoveFile = () => {
-    setFile(null);
-    setUploadProgress(0);
+    setFile(null)
+    setUploadProgress(0)
     if (inputRef.current) {
-      inputRef.current.value = '';
+      inputRef.current.value = ''
     }
-  };
+  }
 
   const handleUpload = async () => {
-    if (!file) return;
-    
-    setError(null);
-    
+    if (!file) return
+
+    setError(null)
+
     // Simulação de progresso
     const interval = setInterval(() => {
-      setUploadProgress(prev => {
+      setUploadProgress((prev) => {
         if (prev >= 95) {
-          clearInterval(interval);
-          return prev;
+          clearInterval(interval)
+          return prev
         }
-        return prev + 5;
-      });
-    }, 100);
-    
+        return prev + 5
+      })
+    }, 100)
+
     try {
-      await onUpload(file);
-      setUploadProgress(100);
+      await onUpload(file)
+      setUploadProgress(100)
     } catch (err) {
-      setError('Ocorreu um erro ao processar o arquivo.');
-      setUploadProgress(0);
+      setError('Ocorreu um erro ao processar o arquivo.')
+      setUploadProgress(0)
     } finally {
-      clearInterval(interval);
+      clearInterval(interval)
     }
-  };
+  }
 
   return (
     <div className="space-y-4">
       <div
         className={`border-2 border-dashed rounded-lg p-6 transition-colors ${
-          dragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
+          dragActive
+            ? 'border-primary bg-primary/5'
+            : 'border-muted-foreground/25'
         }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
@@ -125,9 +127,9 @@ export function UploadForm({ onUpload, isLoading }: UploadFormProps) {
               <div className="text-xs text-muted-foreground">
                 {(file.size / 1024 / 1024).toFixed(2)} MB
               </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 className="gap-2"
                 onClick={handleRemoveFile}
               >
@@ -148,8 +150,8 @@ export function UploadForm({ onUpload, isLoading }: UploadFormProps) {
                   O arquivo deve ser menor que 10MB
                 </p>
               </div>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => inputRef.current?.click()}
               >
                 Selecionar arquivo
@@ -183,8 +185,8 @@ export function UploadForm({ onUpload, isLoading }: UploadFormProps) {
         </div>
       )}
 
-      <Button 
-        className="w-full" 
+      <Button
+        className="w-full"
         disabled={!file || isLoading || uploadProgress === 100}
         onClick={handleUpload}
       >
@@ -198,5 +200,5 @@ export function UploadForm({ onUpload, isLoading }: UploadFormProps) {
         )}
       </Button>
     </div>
-  );
+  )
 }
