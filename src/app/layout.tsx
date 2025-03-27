@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+// import { Inter } from 'next/font/google'
 import './globals.css'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { Providers } from '@/components/provider'
 
-const inter = Inter({ subsets: ['latin'] })
+// const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Extratos Portuários',
@@ -21,7 +21,8 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       {/* suppressHydrationWarning */}
-      <body className={inter.className}>
+      <body>
+        {/* className={inter.className} */}
         <Providers>
           <div className="flex min-h-screen flex-col">
             <Header />

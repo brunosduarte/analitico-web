@@ -45,8 +45,16 @@ import {
   Legend,
 } from 'recharts'
 
+// Interfaces e tipos
+
 // Card displays for summary data
-function SummaryCard({ title, value, label }) {
+interface SummaryCardProps {
+  title: string
+  value: React.ReactNode
+  label: string
+}
+
+function SummaryCard({ title, value, label }: SummaryCardProps) {
   return (
     <div className="bg-background border rounded-md p-4">
       <p className="text-sm text-muted-foreground">{title}</p>
@@ -54,6 +62,46 @@ function SummaryCard({ title, value, label }) {
       <p className="text-xs text-muted-foreground">{label}</p>
     </div>
   )
+}
+
+// Tipagem para tooltips
+interface CustomPieTooltipProps {
+  active?: boolean
+  payload?: Array<{
+    name: string
+    value: number
+    payload: {
+      name: string
+      value: number
+      total: number
+    }
+  }>
+}
+
+// interface CustomBarTooltipProps {
+//   active?: boolean
+//   payload?: Array<{
+//     value: number
+//     name?: string
+//   }>
+//   label?: string
+// }
+
+// Interfaces para dados
+interface WeeklyJobData {
+  week: string
+  [key: string]: string | number
+}
+
+interface OperatorData {
+  tomador: string
+  tomadorNome?: string
+  // totalTrabalhos: number
+  totalValor: number
+  maiorBruto: number
+  porcentagemTotal: string | number
+  mediaValor?: number
+  fainas: number
 }
 
 export default function DashboardPage() {
@@ -81,7 +129,7 @@ export default function DashboardPage() {
     ) + 1
 
   // Fetch dashboard data based on selected period
-  const { isLoading, extratos, categoriasTotais, trabalhos } = useDashboardData(
+  const { isLoading, categoriasTotais, trabalhos } = useDashboardData(
     mesSelecionado,
     anoSelecionado,
   )
@@ -155,7 +203,7 @@ export default function DashboardPage() {
 
   // 1. Salário Bruto (Pie chart)
   const prepareSalaryBreakdownData = () => {
-    if (!extratos || extratos.length === 0) return []
+    if (!trabalhos || trabalhos.length === 0) return []
 
     // Calculate totals from all extracts
     let totalLiquido = 0
@@ -166,33 +214,37 @@ export default function DashboardPage() {
     let totalJudicial = 0
     let totalOutros = 0
 
-    extratos.forEach((extrato) => {
-      // Get trabalhos from each extrato
-      const trabalhos = extrato.trabalhos || []
+    trabalhos.forEach((trabalho) => {
+      totalLiquido += trabalho.liquido || 0
+      totalIRPF += trabalho.impostoDeRenda || 0
+      totalINSS += trabalho.inss || 0
+      totalDAS += trabalho.das || 0
+      totalSindical += trabalho.impostoSindical || 0
+      totalJudicial += trabalho.descontoJudicial || 0
 
-      trabalhos.forEach((trabalho) => {
-        totalLiquido += trabalho.liquido || 0
-        totalIRPF += trabalho.impostoDeRenda || 0
-        totalINSS += trabalho.inss || 0
-        totalDAS += trabalho.das || 0
-        totalSindical += trabalho.impostoSindical || 0
-        totalJudicial += trabalho.descontoJudicial || 0
-
-        // Outros = EPI/Crachá + Mensalidade
-        totalOutros +=
-          (trabalho.descontosEpiCracha || 0) + (trabalho.mensal || 0)
-      })
+      // Outros = EPI/Crachá + Mensalidade
+      totalOutros += (trabalho.descontosEpiCracha || 0) + (trabalho.mensal || 0)
     })
+
+    // Calculate total for percentage
+    const total =
+      totalLiquido +
+      totalIRPF +
+      totalINSS +
+      totalDAS +
+      totalSindical +
+      totalJudicial +
+      totalOutros
 
     // Create pie chart data
     return [
-      { name: 'Líquido', value: totalLiquido },
-      { name: 'IRPF', value: totalIRPF },
-      { name: 'INSS', value: totalINSS },
-      { name: 'DAS', value: totalDAS },
-      { name: 'Sindical', value: totalSindical },
-      { name: 'Judicial', value: totalJudicial },
-      { name: 'Outros', value: totalOutros },
+      { name: 'Líquido', value: totalLiquido, total },
+      { name: 'IRPF', value: totalIRPF, total },
+      { name: 'INSS', value: totalINSS, total },
+      { name: 'DAS', value: totalDAS, total },
+      { name: 'Sindical', value: totalSindical, total },
+      { name: 'Judicial', value: totalJudicial, total },
+      { name: 'Outros', value: totalOutros, total },
     ].filter((item) => item.value > 0)
   }
 
@@ -214,42 +266,45 @@ export default function DashboardPage() {
     if (!trabalhos || trabalhos.length === 0) return []
 
     // Group by 'tomador'
-    const operatorData = trabalhos.reduce((acc, trabalho) => {
-      const tomador = trabalho.tomador
-      if (!acc[tomador]) {
-        acc[tomador] = {
-          tomador,
-          fainas: 0,
-          totalValor: 0,
-          maiorBruto: 0,
-          porcentagemTotal: 0,
+    const operatorData: Record<string, OperatorData> = trabalhos.reduce(
+      (acc: Record<string, OperatorData>, trabalho) => {
+        const tomador = trabalho.tomador
+        if (!acc[tomador]) {
+          acc[tomador] = {
+            tomador,
+            fainas: 0,
+            totalValor: 0,
+            maiorBruto: 0,
+            porcentagemTotal: 0,
+          }
         }
-      }
 
-      acc[tomador].fainas += 1
-      acc[tomador].totalValor += trabalho.baseDeCalculo
-      acc[tomador].maiorBruto = Math.max(
-        acc[tomador].maiorBruto,
-        trabalho.baseDeCalculo,
-      )
+        acc[tomador].fainas += 1
+        acc[tomador].totalValor += trabalho.baseDeCalculo
+        acc[tomador].maiorBruto = Math.max(
+          acc[tomador].maiorBruto,
+          trabalho.baseDeCalculo,
+        )
 
-      return acc
-    }, {})
+        return acc
+      },
+      {},
+    )
 
     // Calculate total value for percentage
     const totalValue = Object.values(operatorData).reduce(
-      (sum, op: any) => sum + op.totalValor,
+      (sum, op) => sum + op.totalValor,
       0,
     )
 
     // Calculate percentages and averages
     return Object.values(operatorData)
-      .map((op: any) => ({
+      .map((op) => ({
         ...op,
         porcentagemTotal: ((op.totalValor / totalValue) * 100).toFixed(2),
         mediaValor: op.fainas > 0 ? op.totalValor / op.fainas : 0,
       }))
-      .sort((a: any, b: any) => b.totalValor - a.totalValor)
+      .sort((a, b) => b.totalValor - a.totalValor)
   }
 
   // 4. Trabalhos por Semana (Bar chart by week with month color coding)
@@ -257,37 +312,46 @@ export default function DashboardPage() {
     if (!trabalhos || trabalhos.length === 0) return []
 
     // Group by week
-    const weeklyData = trabalhos.reduce((acc, trabalho) => {
-      const dateParts = trabalho.pagto.split('/')
-      const month = parseInt(dateParts[1])
-      const year = parseInt(anoSelecionado)
+    const weeklyData: Record<string, Record<string, number>> = trabalhos.reduce(
+      (acc: Record<string, Record<string, number>>, trabalho) => {
+        const dateParts = trabalho.pagto.split('/')
+        const month = parseInt(dateParts[1])
+        const year = parseInt(anoSelecionado)
 
-      // Create date object to get week
-      const date = new Date(year, month - 1, parseInt(trabalho.dia))
-      const weekStart = startOfWeek(date, { weekStartsOn: 0 })
-      const weekKey = format(weekStart, 'MM/dd')
-      const monthKey = format(date, 'MM/yy')
+        // Create date object to get week
+        const date = new Date(year, month - 1, parseInt(trabalho.dia))
+        const weekStart = startOfWeek(date, { weekStartsOn: 0 })
+        const weekKey = format(weekStart, 'MM/dd')
+        const monthKey = format(date, 'MM/yy')
 
-      if (!acc[weekKey]) {
-        acc[weekKey] = {}
-      }
+        if (!acc[weekKey]) {
+          acc[weekKey] = {}
+        }
 
-      if (!acc[weekKey][monthKey]) {
-        acc[weekKey][monthKey] = 0
-      }
+        if (!acc[weekKey][monthKey]) {
+          acc[weekKey][monthKey] = 0
+        }
 
-      acc[weekKey][monthKey] += 1
+        acc[weekKey][monthKey] += 1
 
-      return acc
-    }, {})
+        return acc
+      },
+      {},
+    )
 
     // Convert to array format for chart
     return Object.entries(weeklyData)
       .map(([week, months]) => {
-        return {
+        const result: WeeklyJobData = {
           week: `Semana ${week}`,
-          ...months,
         }
+
+        // Add each month's count to the result
+        Object.entries(months).forEach(([month, count]) => {
+          result[month] = count
+        })
+
+        return result
       })
       .sort((a, b) => {
         const weekA = a.week.split(' ')[1]
@@ -301,17 +365,27 @@ export default function DashboardPage() {
     if (!trabalhos || trabalhos.length === 0) return []
 
     // Count by 'tur' (shift)
-    const shiftCounts = trabalhos.reduce((acc, trabalho) => {
-      const shift = trabalho.tur
-      acc[shift] = (acc[shift] || 0) + 1
-      return acc
-    }, {})
+    const shiftCounts: Record<string, number> = trabalhos.reduce(
+      (acc: Record<string, number>, trabalho) => {
+        const shift = trabalho.tur
+        acc[shift] = (acc[shift] || 0) + 1
+        return acc
+      },
+      {},
+    )
+
+    // Calculate total for percentage
+    const total = Object.values(shiftCounts).reduce(
+      (sum, count) => sum + count,
+      0,
+    )
 
     // Convert to array format for chart
     return Object.entries(shiftCounts)
       .map(([shift, count]) => ({
         name: `Turno ${shift}`,
         value: count,
+        total,
       }))
       .sort((a, b) => b.value - a.value)
   }
@@ -335,16 +409,19 @@ export default function DashboardPage() {
     if (!trabalhos || trabalhos.length === 0) return []
 
     // Count by month
-    const monthCounts = trabalhos.reduce((acc, trabalho) => {
-      const dateParts = trabalho.pagto.split('/')
-      const month = parseInt(dateParts[1])
-      const year = parseInt(anoSelecionado)
+    const monthCounts: Record<string, number> = trabalhos.reduce(
+      (acc: Record<string, number>, trabalho) => {
+        const dateParts = trabalho.pagto.split('/')
+        const month = parseInt(dateParts[1])
+        const year = parseInt(anoSelecionado)
 
-      const monthKey = format(new Date(year, month - 1, 1), 'MM/yy')
+        const monthKey = format(new Date(year, month - 1, 1), 'MM/yy')
 
-      acc[monthKey] = (acc[monthKey] || 0) + 1
-      return acc
-    }, {})
+        acc[monthKey] = (acc[monthKey] || 0) + 1
+        return acc
+      },
+      {},
+    )
 
     // Convert to array format for chart
     return Object.entries(monthCounts)
@@ -370,11 +447,13 @@ export default function DashboardPage() {
       totalFGTS += trabalho.fgts || 0
     })
 
+    const total = totalFerias + totalDecimo + totalFGTS
+
     // Return data for donut chart
     return [
-      { name: 'Férias', value: totalFerias },
-      { name: '13º', value: totalDecimo },
-      { name: 'FGTS', value: totalFGTS },
+      { name: 'Férias', value: totalFerias, total },
+      { name: '13º', value: totalDecimo, total },
+      { name: 'FGTS', value: totalFGTS, total },
     ]
   }
 
@@ -440,7 +519,7 @@ export default function DashboardPage() {
   ]
 
   // Custom tooltip for pie charts
-  const CustomPieTooltip = ({ active, payload }) => {
+  const CustomPieTooltip = ({ active, payload }: CustomPieTooltipProps) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-background border rounded-md shadow-md p-3">
@@ -531,7 +610,10 @@ export default function DashboardPage() {
                 selected={dateRange}
                 onSelect={(range) => {
                   if (range?.from && range?.to) {
-                    setDateRange(range)
+                    setDateRange({
+                      from: range.from,
+                      to: range.to,
+                    })
                   }
                 }}
                 numberOfMonths={2}
@@ -595,13 +677,7 @@ export default function DashboardPage() {
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={salaryBreakdownData.map((item) => ({
-                          ...item,
-                          total: salaryBreakdownData.reduce(
-                            (sum, i) => sum + i.value,
-                            0,
-                          ),
-                        }))}
+                        data={salaryBreakdownData}
                         cx="50%"
                         cy="50%"
                         labelLine={true}
@@ -649,13 +725,7 @@ export default function DashboardPage() {
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={returnsData.map((item) => ({
-                          ...item,
-                          total: returnsData.reduce(
-                            (sum, i) => sum + i.value,
-                            0,
-                          ),
-                        }))}
+                        data={returnsData}
                         cx="50%"
                         cy="50%"
                         innerRadius={60}
@@ -721,8 +791,8 @@ export default function DashboardPage() {
                         width={50}
                       />
                       <Tooltip
-                        formatter={(value) => [value, 'Trabalhos']}
-                        labelFormatter={(label) => `Mês: ${label}`}
+                        formatter={(value: number) => [value, 'Trabalhos']}
+                        labelFormatter={(label: string) => `Mês: ${label}`}
                       />
                       <Legend />
                       <Bar dataKey="count" name="Trabalhos" fill={COLORS[0]} />
@@ -809,7 +879,7 @@ export default function DashboardPage() {
                     />
                     <Tooltip
                       formatter={(value: number) => formatCurrency(value)}
-                      labelFormatter={(label) => `Categoria: ${label}`}
+                      labelFormatter={(label: string) => `Categoria: ${label}`}
                     />
                     <Legend />
                     <Bar
@@ -845,10 +915,7 @@ export default function DashboardPage() {
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={shiftsData.map((item) => ({
-                        ...item,
-                        total: shiftsData.reduce((sum, i) => sum + i.value, 0),
-                      }))}
+                      data={shiftsData}
                       cx="50%"
                       cy="50%"
                       labelLine={true}
@@ -899,7 +966,7 @@ export default function DashboardPage() {
                 </div>
               ) : operatorData.length > 0 ? (
                 <div className="space-y-4">
-                  {operatorData.map((operator: any) => (
+                  {operatorData.map((operator) => (
                     <Card key={operator.tomador} className="bg-muted/10">
                       <CardContent className="p-6">
                         <div className="mb-4">
@@ -921,7 +988,7 @@ export default function DashboardPage() {
                               Média
                             </p>
                             <p className="text-lg font-medium">
-                              {formatCurrency(operator.mediaValor)}
+                              {formatCurrency(operator.mediaValor || 0)}
                             </p>
                           </div>
                           <div>
@@ -988,7 +1055,7 @@ export default function DashboardPage() {
                       />
                       <Tooltip
                         formatter={(value: number) => formatCurrency(value)}
-                        labelFormatter={(label) => `Trabalho: ${label}`}
+                        labelFormatter={(label: string) => `Trabalho: ${label}`}
                       />
                       <Bar
                         dataKey="value"
@@ -1044,7 +1111,7 @@ export default function DashboardPage() {
                       />
                       <Tooltip
                         formatter={(value: number) => formatCurrency(value)}
-                        labelFormatter={(label) => `Trabalho: ${label}`}
+                        labelFormatter={(label: string) => `Trabalho: ${label}`}
                       />
                       <Bar dataKey="value" name="Valor" fill={COLORS[3]} />
                     </BarChart>

@@ -92,7 +92,17 @@ export function useDashboardData(mes?: string, ano?: string) {
       queryKey: ['tomadoresAnalise', trabalhos],
       queryFn: () => {
         // Grouping logic for operators
-        const tomadores = trabalhos.reduce((acc, trabalho) => {
+        type TomadorRecord = Record<
+          string,
+          {
+            tomador: string
+            tomadorNome: string
+            totalTrabalhos: number
+            valorTotal: number
+          }
+        >
+
+        const tomadores = trabalhos.reduce((acc: TomadorRecord, trabalho) => {
           const tomador = trabalho.tomador
 
           if (!acc[tomador]) {
