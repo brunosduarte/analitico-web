@@ -1,4 +1,3 @@
-// components/upload/upload-form.tsx
 'use client'
 
 import { useState, useRef } from 'react'
