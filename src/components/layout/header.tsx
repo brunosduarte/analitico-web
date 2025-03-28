@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ModeToggle } from '@/components/theme/mode-toggle'
-import { FileText, BarChart3, Upload, Menu } from 'lucide-react'
+import { Ship, BarChart3, FileText, Upload, Menu } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,15 +54,16 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-2">
+    <header className="sticky top-0 z-50 w-full border-b bg-[#0060A4]/[0.85] backdrop-blur ">
+      {/* bg-background/95 supports-[backdrop-filter]:bg-background/60 */}
+      <div className="select-none container flex h-16 items-center justify-between">
+        <div className="flex items-center gap-2 text-white">
           <Link
             href={ROUTES.HOME}
             className="flex items-center space-x-2 text-xl font-bold"
           >
-            <FileText className="h-6 w-6" />
-            <span>Extratos Portuários</span>
+            <Ship className="h-6 w-6" />
+            <span>PnT</span>
           </Link>
         </div>
 
@@ -73,8 +74,10 @@ export function Header() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center text-sm font-medium transition-colors hover:text-primary',
-                isActive(item) ? 'text-foreground' : 'text-muted-foreground',
+                'flex items-center text-sm font-medium transition-colors text-gray-300 hover:text-slate-400',
+                isActive(item)
+                  ? 'bg-yellow-400 border-1 border-yellow-500 p-2 rounded-lg text-black'
+                  : 'text-gray-300',
               )}
             >
               {item.icon}

@@ -8,13 +8,13 @@ import { Providers } from '@/providers'
 // Metadados padrão da aplicação
 export const metadata: Metadata = {
   title: {
-    template: '%s | Extratos Portuários',
-    default: 'Extratos Portuários',
+    template: '%s | PnT',
+    default: 'PnT',
   },
   description:
     'Sistema de visualização e gestão de extratos de trabalhadores portuários',
-  keywords: ['extratos', 'portuários', 'trabalhadores', 'gestão', 'análise'],
-  authors: [{ name: 'Extratos Portuários' }],
+  keywords: ['extratos', 'portuários', 'trabalhadores', 'tpa', 'análise'],
+  authors: [{ name: 'PnT' }],
 }
 
 // Configuração de viewport separada (nova API do Next.js 14)
