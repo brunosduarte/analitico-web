@@ -8,7 +8,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { CalendarIcon } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import {
   format,
   startOfMonth,
@@ -18,90 +18,155 @@ import {
   subMonths,
   subWeeks,
   subDays,
+  isValid,
 } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
-interface PeriodSelectorProps {
-  onChange: (from: Date, to: Date) => void
+export interface DateRange {
+  from: Date
+  to: Date
 }
 
-export default function PeriodSelector({ onChange }: PeriodSelectorProps) {
-  const [dateRange, setDateRange] = useState<{
-    from: Date
-    to: Date
-  }>({
-    from: startOfMonth(new Date()),
-    to: endOfMonth(new Date()),
-  })
+export interface PeriodOption {
+  label: string
+  getValue: () => DateRange
+}
+
+interface PeriodSelectorProps {
+  onChange: (range: DateRange) => void
+  initialRange?: DateRange
+  className?: string
+}
+
+/**
+ * Componente PeriodSelector: Seletor de período com presets
+ */
+export function PeriodSelector({
+  onChange,
+  initialRange,
+  // className,
+}: PeriodSelectorProps) {
+  // Estado para o período selecionado
+  const [dateRange, setDateRange] = useState<DateRange>(
+    initialRange || {
+      from: startOfMonth(new Date()),
+      to: endOfMonth(new Date()),
+    },
+  )
 
   // Selected period display string
-  const selectedPeriodText = `${format(dateRange.from, 'dd/MM/yy')} - ${format(dateRange.to, 'dd/MM/yy')}`
+  const selectedPeriodText =
+    isValid(dateRange.from) && isValid(dateRange.to)
+      ? `${format(dateRange.from, 'dd/MM/yy')} - ${format(dateRange.to, 'dd/MM/yy')}`
+      : 'Selecione um período'
+
+  // Calcula o número de dias no período
   const daysDifference =
-    Math.round(
-      (dateRange.to.getTime() - dateRange.from.getTime()) /
-        (1000 * 60 * 60 * 24),
-    ) + 1
+    isValid(dateRange.from) && isValid(dateRange.to)
+      ? Math.round(
+          (dateRange.to.getTime() - dateRange.from.getTime()) /
+            (1000 * 60 * 60 * 24),
+        ) + 1
+      : 0
 
-  // Update date range and trigger onChange
-  const updateDateRange = (from: Date, to: Date) => {
-    setDateRange({ from, to })
-    onChange(from, to)
-  }
+  // Função para atualizar o período selecionado
+  const updateDateRange = useCallback(
+    (from: Date, to: Date) => {
+      const newRange = { from, to }
+      setDateRange(newRange)
+      onChange(newRange)
+    },
+    [onChange],
+  )
 
-  // Period preset handlers
-  const selectThisMonth = () => {
-    const now = new Date()
-    const from = startOfMonth(now)
-    const to = endOfMonth(now)
-    updateDateRange(from, to)
-  }
+  // Definição dos presets de período
+  const periodPresets: PeriodOption[] = [
+    {
+      label: 'Esse mês',
+      getValue: () => {
+        const now = new Date()
+        return {
+          from: startOfMonth(now),
+          to: endOfMonth(now),
+        }
+      },
+    },
+    {
+      label: 'Essa semana',
+      getValue: () => {
+        const now = new Date()
+        return {
+          from: startOfWeek(now, { weekStartsOn: 0 }),
+          to: endOfWeek(now, { weekStartsOn: 0 }),
+        }
+      },
+    },
+    {
+      label: 'Semana passada',
+      getValue: () => {
+        const now = subWeeks(new Date(), 1)
+        return {
+          from: startOfWeek(now, { weekStartsOn: 0 }),
+          to: endOfWeek(now, { weekStartsOn: 0 }),
+        }
+      },
+    },
+    {
+      label: 'Mês passado',
+      getValue: () => {
+        const now = subMonths(new Date(), 1)
+        return {
+          from: startOfMonth(now),
+          to: endOfMonth(now),
+        }
+      },
+    },
+    {
+      label: 'Últimos 30 dias',
+      getValue: () => {
+        const now = new Date()
+        return {
+          from: subDays(now, 29),
+          to: now,
+        }
+      },
+    },
+    {
+      label: 'Últimos 3 meses',
+      getValue: () => {
+        const now = new Date()
+        return {
+          from: startOfMonth(subMonths(now, 2)),
+          to: endOfMonth(now),
+        }
+      },
+    },
+    {
+      label: 'Últimos 6 meses',
+      getValue: () => {
+        const now = new Date()
+        return {
+          from: startOfMonth(subMonths(now, 5)),
+          to: endOfMonth(now),
+        }
+      },
+    },
+    {
+      label: 'Últimos 12 meses',
+      getValue: () => {
+        const now = new Date()
+        return {
+          from: startOfMonth(subMonths(now, 11)),
+          to: endOfMonth(now),
+        }
+      },
+    },
+  ]
 
-  const selectThisWeek = () => {
-    const now = new Date()
-    const from = startOfWeek(now, { weekStartsOn: 0 })
-    const to = endOfWeek(now, { weekStartsOn: 0 })
-    updateDateRange(from, to)
-  }
-
-  const selectLastWeek = () => {
-    const now = subWeeks(new Date(), 1)
-    const from = startOfWeek(now, { weekStartsOn: 0 })
-    const to = endOfWeek(now, { weekStartsOn: 0 })
-    updateDateRange(from, to)
-  }
-
-  const selectLastMonth = () => {
-    const now = subMonths(new Date(), 1)
-    const from = startOfMonth(now)
-    const to = endOfMonth(now)
-    updateDateRange(from, to)
-  }
-
-  const selectLast30Days = () => {
-    const now = new Date()
-    const from = subDays(now, 29)
-    updateDateRange(from, now)
-  }
-
-  const selectLast3Months = () => {
-    const now = new Date()
-    const from = startOfMonth(subMonths(now, 2))
-    const to = endOfMonth(now)
-    updateDateRange(from, to)
-  }
-
-  const selectLast6Months = () => {
-    const now = new Date()
-    const from = startOfMonth(subMonths(now, 5))
-    const to = endOfMonth(now)
-    updateDateRange(from, to)
-  }
-
-  const selectLast12Months = () => {
-    const now = new Date()
-    const from = startOfMonth(subMonths(now, 11))
-    const to = endOfMonth(now)
-    updateDateRange(from, to)
+  // Função para selecionar um preset
+  const handlePresetSelect = (preset: PeriodOption) => {
+    const range = preset.getValue()
+    updateDateRange(range.from, range.to)
   }
 
   return (
@@ -121,30 +186,16 @@ export default function PeriodSelector({ onChange }: PeriodSelectorProps) {
       <PopoverContent className="w-auto p-0" align="end">
         <div className="p-3 border-b">
           <div className="grid grid-cols-2 gap-2">
-            <Button variant="outline" size="sm" onClick={selectThisMonth}>
-              Esse mês
-            </Button>
-            <Button variant="outline" size="sm" onClick={selectThisWeek}>
-              Essa semana
-            </Button>
-            <Button variant="outline" size="sm" onClick={selectLastWeek}>
-              Semana passada
-            </Button>
-            <Button variant="outline" size="sm" onClick={selectLastMonth}>
-              Mês passado
-            </Button>
-            <Button variant="outline" size="sm" onClick={selectLast30Days}>
-              Últimos 30 dias
-            </Button>
-            <Button variant="outline" size="sm" onClick={selectLast3Months}>
-              Últimos 3 meses
-            </Button>
-            <Button variant="outline" size="sm" onClick={selectLast6Months}>
-              Últimos 6 meses
-            </Button>
-            <Button variant="outline" size="sm" onClick={selectLast12Months}>
-              Últimos 12 meses
-            </Button>
+            {periodPresets.map((preset, index) => (
+              <Button
+                key={index}
+                variant="outline"
+                size="sm"
+                onClick={() => handlePresetSelect(preset)}
+              >
+                {preset.label}
+              </Button>
+            ))}
           </div>
         </div>
         <Calendar
@@ -157,6 +208,9 @@ export default function PeriodSelector({ onChange }: PeriodSelectorProps) {
           }}
           numberOfMonths={2}
           locale={ptBR}
+          disabled={(date) =>
+            date > new Date() || date < new Date('2000-01-01')
+          }
         />
       </PopoverContent>
     </Popover>

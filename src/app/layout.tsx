@@ -1,16 +1,26 @@
-import type { Metadata } from 'next'
-// import { Inter } from 'next/font/google'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
+
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
-import { Providers } from '@/components/provider'
+import { Providers } from '@/providers'
 
-// const inter = Inter({ subsets: ['latin'] })
-
+// Metadados padrão da aplicação
 export const metadata: Metadata = {
-  title: 'Extratos Portuários',
+  title: {
+    template: '%s | Extratos Portuários',
+    default: 'Extratos Portuários',
+  },
   description:
     'Sistema de visualização e gestão de extratos de trabalhadores portuários',
+  keywords: ['extratos', 'portuários', 'trabalhadores', 'gestão', 'análise'],
+  authors: [{ name: 'Extratos Portuários' }],
+}
+
+// Configuração de viewport separada (nova API do Next.js 14)
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
 }
 
 export default function RootLayout({
@@ -19,10 +29,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="pt-BR">
-      {/* suppressHydrationWarning */}
-      <body>
-        {/* className={inter.className} */}
+    <html lang="pt-BR" suppressHydrationWarning>
+      <body className="min-h-screen bg-background font-sans antialiased">
         <Providers>
           <div className="flex min-h-screen flex-col">
             <Header />

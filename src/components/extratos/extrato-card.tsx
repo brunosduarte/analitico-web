@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { ExtratoResumo } from '@/types'
 import {
   Card,
   CardContent,
@@ -9,17 +10,21 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { ExtratoResumo } from '@/types'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { FileText, ChevronRight } from 'lucide-react'
 import { formatCurrency, getCategoryColor, getMonthName, cn } from '@/lib/utils'
+import { ROUTES } from '@/lib/constants'
 
 interface ExtratoCardProps {
   extrato: ExtratoResumo
+  className?: string
 }
 
-export function ExtratoCard({ extrato }: ExtratoCardProps) {
+/**
+ * Componente ExtratoCard: Card para exibir resumo de um extrato
+ */
+export function ExtratoCard({ extrato, className }: ExtratoCardProps) {
   const {
     id,
     matricula,
@@ -30,11 +35,12 @@ export function ExtratoCard({ extrato }: ExtratoCardProps) {
     totalTrabalhos,
     valorTotal,
   } = extrato
+
   const categoryColor = getCategoryColor(categoria)
   const monthName = getMonthName(mes)
 
   return (
-    <Card className="extrato-card overflow-hidden">
+    <Card className={cn('extrato-card overflow-hidden', className)}>
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <CardTitle className="text-lg font-bold">{nome}</CardTitle>
@@ -68,7 +74,7 @@ export function ExtratoCard({ extrato }: ExtratoCardProps) {
       <CardFooter className="pt-2">
         <Button variant="outline" className="w-full" asChild>
           <Link
-            href={`/extratos/${id}`}
+            href={ROUTES.EXTRATO_DETAIL(id)}
             className="flex items-center justify-between"
           >
             <span className="flex items-center">
@@ -80,5 +86,90 @@ export function ExtratoCard({ extrato }: ExtratoCardProps) {
         </Button>
       </CardFooter>
     </Card>
+  )
+}
+
+/**
+ * Componente ExtratoCardSkeleton: Card de carregamento para extratos
+ */
+export function ExtratoCardSkeleton() {
+  return (
+    <Card className="overflow-hidden">
+      <CardHeader className="pb-2">
+        <div className="flex justify-between">
+          <div className="h-6 w-3/4 bg-muted rounded-md animate-pulse" />
+          <div className="h-6 w-1/4 bg-muted rounded-full animate-pulse" />
+        </div>
+        <div className="h-4 w-1/2 bg-muted rounded-md animate-pulse mt-2" />
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex justify-between">
+          <div className="h-4 w-1/3 bg-muted rounded-md animate-pulse" />
+          <div className="h-4 w-1/3 bg-muted rounded-md animate-pulse" />
+        </div>
+        <div className="flex justify-between">
+          <div className="h-4 w-1/2 bg-muted rounded-md animate-pulse" />
+          <div className="h-4 w-1/6 bg-muted rounded-md animate-pulse" />
+        </div>
+        <div className="flex justify-between">
+          <div className="h-4 w-1/3 bg-muted rounded-md animate-pulse" />
+          <div className="h-4 w-1/4 bg-muted rounded-md animate-pulse" />
+        </div>
+      </CardContent>
+      <CardFooter className="pt-2">
+        <div className="h-9 w-full bg-muted rounded-md animate-pulse" />
+      </CardFooter>
+    </Card>
+  )
+}
+
+interface ExtratoCardGridProps {
+  extratos: ExtratoResumo[]
+  isLoading?: boolean
+  emptyComponent?: React.ReactNode
+}
+
+/**
+ * Componente ExtratoCardGrid: Grid de cards de extratos
+ */
+export function ExtratoCardGrid({
+  extratos,
+  isLoading = false,
+  emptyComponent,
+}: ExtratoCardGridProps) {
+  if (isLoading) {
+    // Exibir skeleton cards quando estiver carregando
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[...Array(6)].map((_, i) => (
+          <ExtratoCardSkeleton key={i} />
+        ))}
+      </div>
+    )
+  }
+
+  if (extratos.length === 0) {
+    // Componente vazio personalizado ou mensagem padrão
+    return (
+      emptyComponent || (
+        <div className="text-center py-12">
+          <h3 className="text-xl font-medium mb-2">
+            Nenhum extrato encontrado
+          </h3>
+          <p className="text-muted-foreground">
+            Tente ajustar os filtros ou fazer upload de novos extratos.
+          </p>
+        </div>
+      )
+    )
+  }
+
+  // Exibir grid de extratos
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {extratos.map((extrato) => (
+        <ExtratoCard key={extrato.id} extrato={extrato} />
+      ))}
+    </div>
   )
 }

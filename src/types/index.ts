@@ -1,6 +1,9 @@
-// Definindo os tipos baseados no backend
+/**
+ * Tipos compartilhados para a aplicação de Extratos Portuários
+ */
 
-export type ResumoExtrato = {
+// Tipos básicos de dados financeiros
+export type ValoresMonetarios = {
   baseDeCalculo: number
   inss: number
   impostoDeRenda: number
@@ -16,7 +19,11 @@ export type ResumoExtrato = {
   fgts: number
 }
 
-export type Trabalho = {
+// Resumo de dados financeiros usado em vários contextos
+export type ResumoExtrato = ValoresMonetarios
+
+// Tipo para um único trabalho/faina
+export type Trabalho = ValoresMonetarios & {
   dia: string
   folha: string
   tomador: string
@@ -26,21 +33,9 @@ export type Trabalho = {
   tur: string
   ter: string
   pagto: string
-  baseDeCalculo: number
-  inss: number
-  impostoDeRenda: number
-  descontoJudicial: number
-  das: number
-  mensal: number
-  impostoSindical: number
-  descontosEpiCracha: number
-  liquido: number
-  ferias: number
-  decimoTerceiro: number
-  encargosDecimo: number
-  fgts: number
 }
 
+// Tipo para um extrato completo
 export type Extrato = {
   id?: string
   matricula: string
@@ -53,6 +48,7 @@ export type Extrato = {
   revisadas: ResumoExtrato
 }
 
+// Resumo de um extrato para listagens
 export type ExtratoResumo = {
   id: string
   matricula: string
@@ -64,6 +60,7 @@ export type ExtratoResumo = {
   valorTotal: number
 }
 
+// Tipo para resumo mensal
 export type ResumoMensal = {
   _id: {
     mes: string
@@ -76,6 +73,7 @@ export type ResumoMensal = {
   totalTrabalhadores: number
 }
 
+// Tipo para análise de tomadores
 export type TomadorAnalise = {
   tomador: string
   tomadorNome?: string
@@ -83,60 +81,74 @@ export type TomadorAnalise = {
   valorTotal: number
 }
 
+// Tipo para totais por categoria
 export type CategoriaTotais = {
   categoria: string
   count: number
   valorTotal: number
 }
 
+// Tipo para opções de período (mês/ano)
 export type MesAnoOptions = {
   mes: string
   ano: string
   label: string
 }
 
-// Função utilitária para converter mês de abreviação para número
-export const mesParaNumero = (mes: string): string => {
-  const meses: { [key: string]: string } = {
-    JAN: '01',
-    FEV: '02',
-    MAR: '03',
-    ABR: '04',
-    MAI: '05',
-    JUN: '06',
-    JUL: '07',
-    AGO: '08',
-    SET: '09',
-    OUT: '10',
-    NOV: '11',
-    DEZ: '12',
-  }
-  return meses[mes] || '01'
+// Tipos para dados de gráficos do dashboard
+export type SalaryBreakdownItem = {
+  name: string
+  value: number
+  total: number
 }
 
-// Função utilitária para converter número para nome do mês
-export const numeroParaMes = (numero: string): string => {
-  const meses: { [key: string]: string } = {
-    '01': 'Janeiro',
-    '02': 'Fevereiro',
-    '03': 'Março',
-    '04': 'Abril',
-    '05': 'Maio',
-    '06': 'Junho',
-    '07': 'Julho',
-    '08': 'Agosto',
-    '09': 'Setembro',
-    '10': 'Outubro',
-    '11': 'Novembro',
-    '12': 'Dezembro',
-  }
-  return meses[numero] || 'Janeiro'
+export type ChartDataItem = {
+  name: string
+  value: number
 }
 
-// Função para formatar valor monetário
-export const formatarMoeda = (valor: number): string => {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(valor)
+export type WeeklyJobData = {
+  week: string
+  [key: string]: string | number
+}
+
+export type TomadorCardData = {
+  tomador: string
+  tomadorNome?: string
+  totalValor: number
+  maiorBruto: number
+  porcentagemTotal: string | number
+  mediaValor?: number
+  fainas: number
+}
+
+export type SummaryData = {
+  totalFainas: number
+  mediaFainasSemana: number
+  diasTrabalhados: number
+  mediaBrutoFaina: number
+  mediaLiquidoFaina: number
+}
+
+// Enums para meses e categorias
+export enum Categoria {
+  ESTIVADOR = 'ESTIVADOR',
+  ARRUMADOR = 'ARRUMADOR',
+  VIGIA = 'VIGIA',
+  CONFERENTE = 'CONFERENTE',
+}
+
+export enum Mes {
+  JAN = 'JAN',
+  FEV = 'FEV',
+  MAR = 'MAR',
+  ABR = 'ABR',
+  MAI = 'MAI',
+  JUN = 'JUN',
+  JUL = 'JUL',
+  AGO = 'AGO',
+  SET = 'SET',
+  OUT = 'OUT',
+  NOV = 'NOV',
+  DEZ = 'DEZ',
 }

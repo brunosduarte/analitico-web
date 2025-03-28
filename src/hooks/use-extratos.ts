@@ -3,11 +3,15 @@ import {
   getExtratos,
   getExtratoById,
   uploadExtratoPDF,
-  ExtratoFiltros,
+  getAnaliseTomadores,
 } from '@/lib/api'
-import { Extrato, ExtratoResumo } from '@/types'
+import { Extrato, ExtratoResumo, MesAnoOptions } from '@/types'
+import { ExtratoFiltros } from '@/types/api'
+import { MESES_ORDEM } from '@/lib/constants'
 
-// Hook para buscar lista de extratos com filtros opcionais
+/**
+ * Hook para buscar lista de extratos com filtros opcionais
+ */
 export function useExtratos(filtros?: ExtratoFiltros) {
   return useQuery<ExtratoResumo[], Error>({
     queryKey: ['extratos', filtros],
@@ -15,7 +19,9 @@ export function useExtratos(filtros?: ExtratoFiltros) {
   })
 }
 
-// Hook para buscar um extrato específico por ID
+/**
+ * Hook para buscar um extrato específico por ID
+ */
 export function useExtrato(id: string) {
   return useQuery<Extrato, Error>({
     queryKey: ['extrato', id],
@@ -24,7 +30,9 @@ export function useExtrato(id: string) {
   })
 }
 
-// Hook para fazer upload de extratos em PDF
+/**
+ * Hook para fazer upload de extratos em PDF
+ */
 export function useUploadExtrato() {
   const queryClient = useQueryClient()
 
@@ -37,23 +45,33 @@ export function useUploadExtrato() {
   })
 }
 
-// Hook para obter valores únicos de mês/ano para filtros
+/**
+ * Hook para obter análise de tomadores
+ */
+export function useAnaliseTomadores(extratos: ExtratoResumo[]) {
+  return useQuery({
+    queryKey: ['tomadores-analise', extratos.map((e) => e.id)],
+    queryFn: () => getAnaliseTomadores(extratos),
+    enabled: extratos.length > 0,
+  })
+}
+
+/**
+ * Hook para obter valores únicos de mês/ano para filtros
+ */
 export function useExtratoPeriodos(extratos: ExtratoResumo[]) {
   // Extrair mês/ano únicos dos extratos
-  const periodos = extratos.reduce(
-    (acc, extrato) => {
-      if (!acc.some((p) => p.mes === extrato.mes && p.ano === extrato.ano)) {
-        acc.push({
-          mes: extrato.mes,
-          ano: extrato.ano,
-          label: `${extrato.mes}/${extrato.ano}`,
-        })
-      }
+  const periodos = extratos.reduce((acc, extrato) => {
+    if (!acc.some((p) => p.mes === extrato.mes && p.ano === extrato.ano)) {
+      acc.push({
+        mes: extrato.mes,
+        ano: extrato.ano,
+        label: `${extrato.mes}/${extrato.ano}`,
+      })
+    }
 
-      return acc
-    },
-    [] as { mes: string; ano: string; label: string }[],
-  )
+    return acc
+  }, [] as MesAnoOptions[])
 
   // Ordenar por ano e mês
   return periodos.sort((a, b) => {
@@ -61,30 +79,36 @@ export function useExtratoPeriodos(extratos: ExtratoResumo[]) {
       return a.ano.localeCompare(b.ano)
     }
 
-    // Mapeamento de abreviações de meses para valores numéricos para ordenação
-    const mesesOrdem: Record<string, number> = {
-      JAN: 1,
-      FEV: 2,
-      MAR: 3,
-      ABR: 4,
-      MAI: 5,
-      JUN: 6,
-      JUL: 7,
-      AGO: 8,
-      SET: 9,
-      OUT: 10,
-      NOV: 11,
-      DEZ: 12,
-    }
-
-    return mesesOrdem[a.mes] - mesesOrdem[b.mes]
+    // Usar o índice no array MESES_ORDEM para ordenação
+    const indexA = MESES_ORDEM.indexOf(a.mes)
+    const indexB = MESES_ORDEM.indexOf(b.mes)
+    return indexA - indexB
   })
 }
 
-// Hook para obter categorias únicas para filtros
+/**
+ * Hook para obter categorias únicas para filtros
+ */
 export function useExtratoCategorias(extratos: ExtratoResumo[]) {
   // Extrair categorias únicas
   return Array.from(
     new Set(extratos.map((extrato) => extrato.categoria)),
   ).sort()
+}
+
+/**
+ * Hook que combina os dados de extratos com seus períodos e categorias
+ */
+export function useExtratosComFiltros(filtros?: ExtratoFiltros) {
+  const { data: extratos = [], isLoading, error } = useExtratos(filtros)
+  const periodos = useExtratoPeriodos(extratos)
+  const categorias = useExtratoCategorias(extratos)
+
+  return {
+    extratos,
+    periodos,
+    categorias,
+    isLoading,
+    error,
+  }
 }

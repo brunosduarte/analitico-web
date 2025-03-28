@@ -1,35 +1,62 @@
-import axios from 'axios'
+import axios, {
+  AxiosError,
+  AxiosInstance,
+  // AxiosRequestConfig,
+  AxiosResponse,
+} from 'axios'
+import { API_CONFIG } from './constants'
+import {
+  ApiResponse,
+  DashboardFiltros,
+  ExtratoFiltros,
+  // ExtratoFormData,
+} from '@/types/api'
 import { Extrato, ExtratoResumo, ResumoMensal, TomadorAnalise } from '@/types'
 
-// Criando uma instância do axios com configurações base
-const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
+/**
+ * Cliente axios configurado para a API
+ */
+const apiClient: AxiosInstance = axios.create({
+  baseURL: API_CONFIG.BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: API_CONFIG.TIMEOUT,
 })
 
-// Interface para filtros de busca
-export interface ExtratoFiltros {
-  matricula?: string
-  nome?: string
-  mes?: string
-  ano?: string
-  categoria?: string
-  tomador?: string
-  dataInicio?: string
-  dataFim?: string
-}
+/**
+ * Interceptor para tratamento de erros
+ */
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError) => {
+    // Tratamento de erros comuns
+    if (error.response) {
+      console.error(
+        'Erro na resposta da API:',
+        error.response.status,
+        error.response?.data,
+      )
+    } else if (error.request) {
+      console.error('Sem resposta da API:', error.request)
+    } else {
+      console.error('Erro ao configurar requisição:', error.message)
+    }
 
-// Funções de API para interação com o backend
+    return Promise.reject(error)
+  },
+)
 
-// Buscar lista de extratos com filtros opcionais
+/**
+ * Buscar lista de extratos com filtros opcionais
+ */
 export const getExtratos = async (
   filtros?: ExtratoFiltros,
 ): Promise<ExtratoResumo[]> => {
   try {
     const params = { ...filtros }
-    const response = await api.get('/analitico', { params })
+    const response: AxiosResponse<ApiResponse<ExtratoResumo[]>> =
+      await apiClient.get('/analitico', { params })
     return response.data.data
   } catch (error) {
     console.error('Erro ao buscar extratos:', error)
@@ -37,10 +64,14 @@ export const getExtratos = async (
   }
 }
 
-// Buscar um extrato específico por ID
+/**
+ * Buscar um extrato específico por ID
+ */
 export const getExtratoById = async (id: string): Promise<Extrato> => {
   try {
-    const response = await api.get(`/analitico/${id}`)
+    const response: AxiosResponse<ApiResponse<Extrato>> = await apiClient.get(
+      `/analitico/${id}`,
+    )
     return response.data.data
   } catch (error) {
     console.error(`Erro ao buscar extrato ID ${id}:`, error)
@@ -48,12 +79,16 @@ export const getExtratoById = async (id: string): Promise<Extrato> => {
   }
 }
 
-// Buscar trabalhos por tomador
+/**
+ * Buscar trabalhos por tomador
+ */
 export const getTrabalhosPorTomador = async (
   tomador: string,
 ): Promise<any[]> => {
   try {
-    const response = await api.get(`/trabalhos/tomador/${tomador}`)
+    const response: AxiosResponse<ApiResponse<any[]>> = await apiClient.get(
+      `/trabalhos/tomador/${tomador}`,
+    )
     return response.data.data
   } catch (error) {
     console.error(`Erro ao buscar trabalhos do tomador ${tomador}:`, error)
@@ -61,13 +96,16 @@ export const getTrabalhosPorTomador = async (
   }
 }
 
-// Buscar resumo mensal
+/**
+ * Buscar resumo mensal
+ */
 export const getResumoMensal = async (
   mes: string,
   ano: string,
 ): Promise<ResumoMensal> => {
   try {
-    const response = await api.get(`/resumo/${mes}/${ano}`)
+    const response: AxiosResponse<ApiResponse<ResumoMensal>> =
+      await apiClient.get(`/resumo/${mes}/${ano}`)
     return response.data.data
   } catch (error) {
     console.error(`Erro ao buscar resumo mensal ${mes}/${ano}:`, error)
@@ -75,14 +113,22 @@ export const getResumoMensal = async (
   }
 }
 
-// Upload de extrato PDF
-export const uploadExtratoPDF = async (formData: FormData): Promise<any> => {
+/**
+ * Upload de extrato PDF
+ */
+export const uploadExtratoPDF = async (
+  formData: FormData,
+): Promise<ApiResponse<any>> => {
   try {
-    const response = await api.post('/analitico', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
+    const response: AxiosResponse<ApiResponse<any>> = await apiClient.post(
+      '/analitico',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       },
-    })
+    )
     return response.data
   } catch (error) {
     console.error('Erro ao fazer upload do extrato:', error)
@@ -90,67 +136,41 @@ export const uploadExtratoPDF = async (formData: FormData): Promise<any> => {
   }
 }
 
-// Obter análise de tomadores (esta é uma função de frontend que processa os dados)
+/**
+ * Obter análise de tomadores
+ */
 export const getAnaliseTomadores = async (
   extratos: ExtratoResumo[],
 ): Promise<TomadorAnalise[]> => {
   try {
-    const response = await api.get('/analise/tomadores', {
-      params: {
-        extratoIds: extratos.map((e) => e.id).join(','),
-      },
-    })
+    const response: AxiosResponse<ApiResponse<TomadorAnalise[]>> =
+      await apiClient.get('/analise/tomadores', {
+        params: {
+          extratoIds: extratos.map((e) => e.id).join(','),
+        },
+      })
     return response.data.data
   } catch (error) {
     console.error('Erro ao obter análise de tomadores:', error)
 
     // Fallback para processamento no frontend se a API falhar
-    const tomadores: Record<string, TomadorAnalise> = {}
-
-    // Processar extratos para obter totais básicos por tomador
-    for (const extrato of extratos) {
-      try {
-        const detalhes = await getExtratoById(extrato.id)
-
-        detalhes.trabalhos.forEach((trabalho) => {
-          const { tomador, baseDeCalculo } = trabalho
-
-          if (!tomadores[tomador]) {
-            tomadores[tomador] = {
-              tomador,
-              tomadorNome: trabalho.tomadorNome || tomador,
-              totalTrabalhos: 0,
-              valorTotal: 0,
-            }
-          }
-
-          tomadores[tomador].totalTrabalhos += 1
-          tomadores[tomador].valorTotal += baseDeCalculo
-        })
-      } catch (err) {
-        console.error(
-          `Erro ao processar detalhes do extrato ${extrato.id}:`,
-          err,
-        )
-      }
-    }
-
-    // Retornar como array ordenado
-    return Object.values(tomadores).sort((a, b) => b.valorTotal - a.valorTotal)
+    return processAnaliseTomadoresFallback(extratos)
   }
 }
 
-// Função para obter os dados de salário bruto (distribuição)
+/**
+ * Função para obter os dados de salário bruto (distribuição)
+ */
 export const getSalaryBreakdown = async (
-  mes?: string,
-  ano?: string,
-  dataInicio?: string,
-  dataFim?: string,
+  filtros?: DashboardFiltros,
 ): Promise<any> => {
   try {
-    const response = await api.get('/analise/salario-breakdown', {
-      params: { mes, ano, dataInicio, dataFim },
-    })
+    const response: AxiosResponse<ApiResponse<any>> = await apiClient.get(
+      '/analise/salario-breakdown',
+      {
+        params: filtros,
+      },
+    )
     return response.data.data
   } catch (error) {
     console.error('Erro ao buscar dados de distribuição salarial:', error)
@@ -158,17 +178,19 @@ export const getSalaryBreakdown = async (
   }
 }
 
-// Função para obter distribuição de turnos
+/**
+ * Função para obter distribuição de turnos
+ */
 export const getShiftDistribution = async (
-  mes?: string,
-  ano?: string,
-  dataInicio?: string,
-  dataFim?: string,
+  filtros?: DashboardFiltros,
 ): Promise<any> => {
   try {
-    const response = await api.get('/analise/turnos', {
-      params: { mes, ano, dataInicio, dataFim },
-    })
+    const response: AxiosResponse<ApiResponse<any>> = await apiClient.get(
+      '/analise/turnos',
+      {
+        params: filtros,
+      },
+    )
     return response.data.data
   } catch (error) {
     console.error('Erro ao buscar distribuição de turnos:', error)
@@ -176,17 +198,19 @@ export const getShiftDistribution = async (
   }
 }
 
-// Função para obter distribuição semanal de trabalhos
+/**
+ * Função para obter distribuição semanal de trabalhos
+ */
 export const getWeeklyWorkDistribution = async (
-  mes?: string,
-  ano?: string,
-  dataInicio?: string,
-  dataFim?: string,
+  filtros?: DashboardFiltros,
 ): Promise<any> => {
   try {
-    const response = await api.get('/analise/trabalhos-semanais', {
-      params: { mes, ano, dataInicio, dataFim },
-    })
+    const response: AxiosResponse<ApiResponse<any>> = await apiClient.get(
+      '/analise/trabalhos-semanais',
+      {
+        params: filtros,
+      },
+    )
     return response.data.data
   } catch (error) {
     console.error('Erro ao buscar distribuição semanal de trabalhos:', error)
@@ -194,18 +218,20 @@ export const getWeeklyWorkDistribution = async (
   }
 }
 
-// Função para obter top trabalhos (fainas)
+/**
+ * Função para obter top trabalhos (fainas)
+ */
 export const getTopJobs = async (
-  mes?: string,
-  ano?: string,
-  dataInicio?: string,
-  dataFim?: string,
+  filtros?: DashboardFiltros,
   limit: number = 10,
 ): Promise<any> => {
   try {
-    const response = await api.get('/analise/top-trabalhos', {
-      params: { mes, ano, dataInicio, dataFim, limit },
-    })
+    const response: AxiosResponse<ApiResponse<any>> = await apiClient.get(
+      '/analise/top-trabalhos',
+      {
+        params: { ...filtros, limit },
+      },
+    )
     return response.data.data
   } catch (error) {
     console.error('Erro ao buscar top trabalhos:', error)
@@ -213,17 +239,19 @@ export const getTopJobs = async (
   }
 }
 
-// Função para obter dados de retornos (férias, 13º, FGTS)
+/**
+ * Função para obter dados de retornos (férias, 13º, FGTS)
+ */
 export const getReturnsData = async (
-  mes?: string,
-  ano?: string,
-  dataInicio?: string,
-  dataFim?: string,
+  filtros?: DashboardFiltros,
 ): Promise<any> => {
   try {
-    const response = await api.get('/analise/retornos', {
-      params: { mes, ano, dataInicio, dataFim },
-    })
+    const response: AxiosResponse<ApiResponse<any>> = await apiClient.get(
+      '/analise/retornos',
+      {
+        params: filtros,
+      },
+    )
     return response.data.data
   } catch (error) {
     console.error('Erro ao buscar dados de retornos:', error)
@@ -231,17 +259,19 @@ export const getReturnsData = async (
   }
 }
 
-// Função para obter resumo completo do dashboard
+/**
+ * Função para obter resumo completo do dashboard
+ */
 export const getDashboardSummary = async (
-  mes?: string,
-  ano?: string,
-  dataInicio?: string,
-  dataFim?: string,
+  filtros?: DashboardFiltros,
 ): Promise<any> => {
   try {
-    const response = await api.get('/analise/dashboard-resumo', {
-      params: { mes, ano, dataInicio, dataFim },
-    })
+    const response: AxiosResponse<ApiResponse<any>> = await apiClient.get(
+      '/analise/dashboard-resumo',
+      {
+        params: filtros,
+      },
+    )
     return response.data.data
   } catch (error) {
     console.error('Erro ao buscar resumo do dashboard:', error)
@@ -249,4 +279,43 @@ export const getDashboardSummary = async (
   }
 }
 
-export default api
+// Exportar cliente de API para uso em casos específicos
+export default apiClient
+
+/**
+ * Função auxiliar para processar tomadores no frontend
+ * caso a API falhe
+ */
+const processAnaliseTomadoresFallback = async (
+  extratos: ExtratoResumo[],
+): Promise<TomadorAnalise[]> => {
+  const tomadores: Record<string, TomadorAnalise> = {}
+
+  // Processar extratos para obter totais básicos por tomador
+  for (const extrato of extratos) {
+    try {
+      const detalhes = await getExtratoById(extrato.id)
+
+      detalhes.trabalhos.forEach((trabalho) => {
+        const { tomador, baseDeCalculo } = trabalho
+
+        if (!tomadores[tomador]) {
+          tomadores[tomador] = {
+            tomador,
+            tomadorNome: trabalho.tomadorNome || tomador,
+            totalTrabalhos: 0,
+            valorTotal: 0,
+          }
+        }
+
+        tomadores[tomador].totalTrabalhos += 1
+        tomadores[tomador].valorTotal += baseDeCalculo
+      })
+    } catch (err) {
+      console.error(`Erro ao processar detalhes do extrato ${extrato.id}:`, err)
+    }
+  }
+
+  // Retornar como array ordenado
+  return Object.values(tomadores).sort((a, b) => b.valorTotal - a.valorTotal)
+}

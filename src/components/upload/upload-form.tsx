@@ -10,12 +10,17 @@ import {
   Loader2Icon,
 } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
+import { validatePdfFile } from '@/lib/utils'
+import { UPLOAD_LIMITS } from '@/lib/constants'
 
 interface UploadFormProps {
   onUpload: (file: File) => Promise<void>
   isLoading: boolean
 }
 
+/**
+ * Componente UploadForm: Formulário para upload de arquivos
+ */
 export function UploadForm({ onUpload, isLoading }: UploadFormProps) {
   const [file, setFile] = useState<File | null>(null)
   const [dragActive, setDragActive] = useState(false)
@@ -53,14 +58,10 @@ export function UploadForm({ onUpload, isLoading }: UploadFormProps) {
   }
 
   const handleFile = (file: File) => {
-    if (file.type !== 'application/pdf') {
-      setError('Apenas arquivos PDF são permitidos.')
-      return
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-      // 10MB
-      setError('O arquivo não pode ser maior que 10MB.')
+    // Validar o arquivo
+    const validation = validatePdfFile(file)
+    if (!validation.valid) {
+      setError(validation.message || 'Arquivo inválido')
       return
     }
 
@@ -71,6 +72,7 @@ export function UploadForm({ onUpload, isLoading }: UploadFormProps) {
   const handleRemoveFile = () => {
     setFile(null)
     setUploadProgress(0)
+    setError(null)
     if (inputRef.current) {
       inputRef.current.value = ''
     }
@@ -96,7 +98,12 @@ export function UploadForm({ onUpload, isLoading }: UploadFormProps) {
       await onUpload(file)
       setUploadProgress(100)
     } catch (err) {
-      setError('Ocorreu um erro ao processar o arquivo.')
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Ocorreu um erro ao processar o arquivo.'
+
+      setError(errorMessage)
       setUploadProgress(0)
     } finally {
       clearInterval(interval)
@@ -146,7 +153,8 @@ export function UploadForm({ onUpload, isLoading }: UploadFormProps) {
                   Arraste e solte o arquivo PDF aqui ou
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  O arquivo deve ser menor que 10MB
+                  O arquivo deve ser menor que{' '}
+                  {UPLOAD_LIMITS.MAX_FILE_SIZE / (1024 * 1024)}MB
                 </p>
               </div>
               <Button
