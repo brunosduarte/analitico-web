@@ -30,6 +30,9 @@ import {
   CategoryDistribution,
 } from '@/components/dashboard/charts'
 
+// Importar o componente reutilizado do detalhe de extrato
+import { TrabalhoChart } from '@/components/charts/trabalho-chart'
+
 import { DashboardTomadorSection } from '@/components/dashboard/tomador/tomador-section'
 import { DashboardCategorySection } from '@/components/dashboard/category/category-section'
 
@@ -228,6 +231,13 @@ export default function DashboardPage() {
             <MonthlyJobs data={monthlyJobsData} />
             <WeeklyDistribution data={weeklyDistribution} />
           </div>
+
+          {/* Componente de gráfico de trabalhos movido do detalhe de extrato */}
+          <TrabalhoChart
+            trabalhos={trabalhos}
+            title="Distribuição de Trabalhos"
+            description="Visão consolidada de todos os trabalhos no período"
+          />
 
           <div className="grid grid-cols-1 gap-4">
             <ShiftDistribution trabalhos={trabalhos} />

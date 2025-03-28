@@ -1,20 +1,9 @@
 'use client'
 
-import { WeeklyJobData, ChartDataItem } from '@/types'
-import { DataCard } from '@/components/common/data-card'
+import { WeeklyJobData } from '@/types'
+import { BarChart } from '@/components/charts'
+import { BarTooltip } from '@/components/charts/utils/tooltips'
 import { useMemo } from 'react'
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts'
-import { formatNumber } from '@/lib/utils'
-import { Skeleton } from '@/components/ui/skeleton'
 import { CHART_COLORS } from '@/lib/constants'
 
 interface WeeklyDistributionProps {
@@ -47,9 +36,9 @@ export function WeeklyDistribution({
     // Formatar dados para compatibilidade com o componente Chart
     const formattedData = data.map((item) => {
       // Nome será a semana e o restante são valores
-      const chartItem: ChartDataItem & Record<string, any> = {
+      const chartItem: Record<string, any> = {
         name: item.week,
-        value: 0, // Este valor não será usado diretamente, já que usamos barSeries
+        value: 0, // Valor dummy para satisfazer a tipagem
       }
 
       // Adicionar todas as propriedades do item original
@@ -65,79 +54,16 @@ export function WeeklyDistribution({
     return { barSeries, formattedData }
   }, [data])
 
-  // Componente para tooltip personalizado
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-background border rounded-md shadow-md p-3">
-          <p className="font-medium">Semana: {label}</p>
-          {payload.map((item: any, index: number) => (
-            <p key={index} className="text-sm text-muted-foreground">
-              {item.name}: {formatNumber(item.value)}
-            </p>
-          ))}
-        </div>
-      )
-    }
-    return null
-  }
-
-  if (isLoading) {
-    return (
-      <DataCard
-        title="Trabalhos por Semana"
-        description="Quantidade de trabalhos por semana, coloridos por mês"
-        isLoading={true}
-      >
-        <div className="h-80">
-          <Skeleton className="w-full h-full" />
-        </div>
-      </DataCard>
-    )
-  }
-
-  if (!data || data.length === 0 || barSeries.length === 0) {
-    return (
-      <DataCard
-        title="Trabalhos por Semana"
-        description="Quantidade de trabalhos por semana, coloridos por mês"
-      >
-        <div className="flex items-center justify-center h-80">
-          <p className="text-muted-foreground">
-            Não há dados suficientes para exibir a distribuição semanal
-          </p>
-        </div>
-      </DataCard>
-    )
-  }
-
   return (
-    <DataCard
+    <BarChart
+      data={formattedData}
       title="Trabalhos por Semana"
       description="Quantidade de trabalhos por semana, coloridos por mês"
-    >
-      <div className="h-80">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={formattedData}
-            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
-            {barSeries.map((series) => (
-              <Bar
-                key={series.key}
-                dataKey={series.key}
-                name={series.name}
-                fill={series.color}
-              />
-            ))}
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </DataCard>
+      isLoading={isLoading}
+      emptyMessage="Não há dados suficientes para exibir a distribuição semanal"
+      tooltipContent={<BarTooltip />}
+      height={320}
+      series={barSeries}
+    />
   )
 }

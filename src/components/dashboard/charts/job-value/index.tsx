@@ -1,20 +1,9 @@
 'use client'
 
 import { useMemo } from 'react'
-import { DataCard } from '@/components/common/data-card'
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts'
+import { BarChart } from '@/components/charts'
+import { WorkTooltip } from '@/components/charts/utils/tooltips'
 import { formatCurrency } from '@/lib/utils'
-import { CHART_COLORS } from '@/lib/constants'
-import { Skeleton } from '@/components/ui/skeleton'
 
 interface JobValueProps {
   trabalhos: any[] // Trabalhos com campos adicionados
@@ -61,78 +50,23 @@ export function JobValue({
       .slice(0, limit)
   }, [trabalhos, limit])
 
-  // Tooltip personalizado para valor bruto por faina
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-background border rounded-md shadow-md p-3">
-          <p className="font-medium">Trabalho: {label}</p>
-          <p className="text-sm text-muted-foreground">
-            Valor: {formatCurrency(payload[0].value)}
-          </p>
-        </div>
-      )
-    }
-    return null
-  }
-
-  if (isLoading) {
-    return (
-      <DataCard
-        title="Valor Bruto por Faina (R$)"
-        description="Valor bruto de cada trabalho realizado"
-        isLoading={true}
-      >
-        <div className="h-80">
-          <Skeleton className="w-full h-full" />
-        </div>
-      </DataCard>
-    )
-  }
-
-  if (!workValueData || workValueData.length === 0) {
-    return (
-      <DataCard
-        title="Valor Bruto por Faina (R$)"
-        description="Valor bruto de cada trabalho realizado"
-      >
-        <div className="flex items-center justify-center h-80">
-          <p className="text-muted-foreground">
-            Não há dados suficientes para exibir o gráfico
-          </p>
-        </div>
-      </DataCard>
-    )
-  }
-
   return (
-    <DataCard
+    <BarChart
+      data={workValueData}
       title="Valor Bruto por Faina (R$)"
       description="Valor bruto de cada trabalho realizado"
-    >
-      <div className="h-80">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={workValueData}
-            margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis
-              dataKey="name"
-              tick={{ fontSize: 10 }}
-              angle={-45}
-              textAnchor="end"
-              interval={0}
-            />
-            <YAxis
-              tickFormatter={(value) => formatCurrency(value).split(',')[0]}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
-            <Bar dataKey="value" name="Valor Bruto" fill={CHART_COLORS[2]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </DataCard>
+      isLoading={isLoading}
+      emptyMessage="Não há dados suficientes para exibir o gráfico"
+      tooltipContent={<WorkTooltip />}
+      height={320}
+      yAxisFormatter={(value) => formatCurrency(value).split(',')[0]}
+      xAxisFormatter={(name) => {
+        // Simplificar nomes muito longos
+        if (typeof name === 'string' && name.length > 15) {
+          return name.substring(0, 12) + '...'
+        }
+        return name
+      }}
+    />
   )
 }
