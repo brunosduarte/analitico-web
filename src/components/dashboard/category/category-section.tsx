@@ -19,15 +19,15 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 interface DashboardCategorySectionProps {
   categoriasTotais: CategoriaTotais[]
-  trabalhos: any[] // Usamos any para acessar campos como tur
+  shiftDistribution: any[] // Usamos any para acessar campos como tur
 }
 
 /**
  * Componente DashboardCategorySection: Seção de categorias do dashboard
+ * Nota: O gráfico principal de distribuição por categoria foi movido para a aba "Visão Geral"
  */
 export function DashboardCategorySection({
   categoriasTotais,
-  // trabalhos,
 }: DashboardCategorySectionProps) {
   // Formatar dados de categorias para o gráfico
   const categoryChartData = useMemo(() => {
@@ -39,12 +39,6 @@ export function DashboardCategorySection({
       total: categoriasTotais.reduce((sum, cat) => sum + cat.valorTotal, 0),
     }))
   }, [categoriasTotais])
-
-  // Séries para o gráfico de categorias
-  // const categorySeries = [
-  //   { key: 'value', name: 'Valor Total' },
-  //   { key: 'count', name: 'Quantidade' },
-  // ]
 
   // Tooltip para o gráfico de categorias
   const CategoryTooltip = ({ active, payload }: any) => {
@@ -68,8 +62,8 @@ export function DashboardCategorySection({
   if (categoriasTotais.length === 0) {
     return (
       <DataCard
-        title="Comparativo de Valores por Categoria"
-        description="Valores totais por categoria"
+        title="Análise Detalhada por Categoria"
+        description="Comparação detalhada entre as diferentes categorias profissionais"
         isLoading={true}
       >
         <div className="h-96">
@@ -81,8 +75,8 @@ export function DashboardCategorySection({
 
   return (
     <DataCard
-      title="Comparativo de Valores por Categoria"
-      description="Valores totais por categoria"
+      title="Análise Detalhada por Categoria"
+      description="Comparação detalhada entre as diferentes categorias profissionais"
     >
       <div className="h-96">
         {categoryChartData.length > 0 ? (

@@ -74,10 +74,10 @@ export function Header() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center text-sm font-medium transition-colors text-gray-300 hover:text-slate-400',
+                'flex items-center text-sm font-medium transition-colors text-gray-200 hover:text-slate-400',
                 isActive(item)
-                  ? 'bg-yellow-400 border-1 border-yellow-500 p-2 rounded-lg text-black'
-                  : 'text-gray-300',
+                  ? 'bg-yellow-400 border-1 border-yellow-500 p-2 rounded-lg text-black hover:text-slate-600'
+                  : 'text-gray-200',
               )}
             >
               {item.icon}

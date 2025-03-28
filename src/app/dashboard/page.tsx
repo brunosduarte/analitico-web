@@ -15,15 +15,21 @@ import {
 } from '@/components/common/empty-state'
 import { SummaryCards } from '@/components/dashboard/summary-cards'
 import { format } from 'date-fns'
-// import { ptBR } from 'date-fns/locale'
 import { DashboardFiltros } from '@/types/api'
 import { MESES_ABREV } from '@/lib/constants'
 
 // Componentes de Gráficos
-import { SalaryBreakdown } from '@/components/dashboard/charts/salary-breakdown'
-import { ReturnsBreakdown } from '@/components/dashboard/charts/returns-breakdown'
-import { WeeklyDistribution } from '@/components/dashboard/charts/weekly-distribution'
-import { MonthlyJobs } from '@/components/dashboard/charts/monthly-jobs'
+import {
+  SalaryBreakdown,
+  ReturnsBreakdown,
+  WeeklyDistribution,
+  MonthlyJobs,
+  ShiftDistribution,
+  JobValue,
+  TopJobs,
+  CategoryDistribution,
+} from '@/components/dashboard/charts'
+
 import { DashboardTomadorSection } from '@/components/dashboard/tomador/tomador-section'
 import { DashboardCategorySection } from '@/components/dashboard/category/category-section'
 
@@ -221,6 +227,19 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 gap-4">
             <MonthlyJobs data={monthlyJobsData} />
             <WeeklyDistribution data={weeklyDistribution} />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            <ShiftDistribution trabalhos={trabalhos} />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <JobValue trabalhos={trabalhos} />
+            <TopJobs trabalhos={trabalhos} />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            <CategoryDistribution data={categoriasTotais} />
           </div>
         </TabsContent>
 

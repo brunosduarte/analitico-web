@@ -20,7 +20,7 @@ interface ShiftDistributionProps {
 }
 
 /**
- * Componente TurnosPieChart: Exibe gráfico de pizza com a distribuição de trabalhos por turno
+ * Componente ShiftDistribution: Exibe gráfico de pizza com a distribuição de trabalhos por turno
  */
 export function ShiftDistribution({
   trabalhos,
