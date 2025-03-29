@@ -30,7 +30,7 @@ export function SummaryCards({ data, isLoading = false }: SummaryCardsProps) {
     {
       title: 'Dom/Fer Trabalhado(s)',
       value: isLoading ? null : formatNumber(data.diasTrabalhados),
-      label: 'Dias efetivamente trabalhados',
+      label: 'Domingos e feriados com trabalho',
       icon: <Calendar className="h-4 w-4" />,
     },
     {

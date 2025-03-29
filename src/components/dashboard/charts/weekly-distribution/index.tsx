@@ -2,9 +2,9 @@
 
 import { WeeklyJobData } from '@/types'
 import { BarChart } from '@/components/charts'
-import { BarTooltip } from '@/components/charts/utils/tooltips'
 import { useMemo } from 'react'
-import { CHART_COLORS } from '@/lib/constants'
+import { CHART_COLORS, MESES_NOME } from '@/lib/constants'
+import { formatNumber } from '@/lib/utils'
 
 interface WeeklyDistributionProps {
   data: WeeklyJobData[]
@@ -13,6 +13,7 @@ interface WeeklyDistributionProps {
 
 /**
  * Componente WeeklyDistribution: Exibe gráfico de barras com a distribuição semanal de trabalhos
+ * Cada mês é representado com uma cor diferente
  */
 export function WeeklyDistribution({
   data,
@@ -26,19 +27,24 @@ export function WeeklyDistribution({
     const sampleItem = data[0]
     const seriesKeys = Object.keys(sampleItem).filter((key) => key !== 'week')
 
-    // Criar configuração para cada série
-    const barSeries = seriesKeys.map((key, index) => ({
-      key,
-      name: `Mês ${key}`,
-      color: CHART_COLORS[index % CHART_COLORS.length],
-    }))
+    // Criar configuração para cada série (um mês/ano)
+    const barSeries = seriesKeys.map((key, index) => {
+      // Separar mês e ano
+      const [mes, ano] = key.split('/')
+      const mesNome = MESES_NOME[mes] || mes
+
+      return {
+        key,
+        name: `${mesNome}/${ano}`,
+        color: CHART_COLORS[index % CHART_COLORS.length],
+      }
+    })
 
     // Formatar dados para compatibilidade com o componente Chart
     const formattedData = data.map((item) => {
       // Nome será a semana e o restante são valores
-      const chartItem: Record<string, any> = {
+      const chartItem: { name: string; [key: string]: any } = {
         name: item.week,
-        value: 0, // Valor dummy para satisfazer a tipagem
       }
 
       // Adicionar todas as propriedades do item original
@@ -54,14 +60,34 @@ export function WeeklyDistribution({
     return { barSeries, formattedData }
   }, [data])
 
+  // Tooltip personalizado para o gráfico de barras
+  const WeeklyTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-background border rounded-md shadow-md p-3">
+          <p className="font-medium">{label}</p>
+          {payload.map((entry: any, index: number) => (
+            <p
+              key={`tooltip-${index}`}
+              className="text-sm text-muted-foreground"
+            >
+              {entry.name}: {formatNumber(entry.value)} trabalhos
+            </p>
+          ))}
+        </div>
+      )
+    }
+    return null
+  }
+
   return (
     <BarChart
       data={formattedData}
       title="Trabalhos por Semana"
-      description="Quantidade de trabalhos por semana, coloridos por mês"
+      description="Distribuição de trabalhos por semana, com cores indicando diferentes meses"
       isLoading={isLoading}
       emptyMessage="Não há dados suficientes para exibir a distribuição semanal"
-      tooltipContent={<BarTooltip />}
+      tooltipContent={<WeeklyTooltip />}
       height={320}
       series={barSeries}
     />

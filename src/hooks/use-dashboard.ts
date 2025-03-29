@@ -7,6 +7,7 @@ import {
   getWeeklyWorkDistribution,
   getTopJobs,
   getReturnsData,
+  getFunctionDistribution,
 } from '@/lib/api'
 import {
   CategoriaTotais,
@@ -15,8 +16,9 @@ import {
   SalaryBreakdownItem,
   SummaryData,
   TomadorCardData,
-  WeeklyJobData,
+  WeeklyWorkItem,
   ChartDataItem,
+  FunctionDistributionItem, // Novo tipo
 } from '@/types'
 import { DashboardFiltros } from '@/types/api'
 import { useExtratoPeriodos } from './use-extratos'
@@ -35,10 +37,11 @@ interface DashboardData {
   summaryData: SummaryData
   salaryBreakdown: SalaryBreakdownItem[]
   shiftDistribution: SalaryBreakdownItem[]
-  weeklyDistribution: WeeklyJobData[]
+  weeklyDistribution: WeeklyWorkItem[]
   topJobs: ChartDataItem[]
   monthlyJobsData: ChartDataItem[]
   returnsData: SalaryBreakdownItem[]
+  functionDistribution: FunctionDistributionItem[] // Nova propriedade
   chartColors: string[]
   isLoading: boolean
   error: Error | null
@@ -143,7 +146,7 @@ export function useDashboardData(filtros?: DashboardFiltros): DashboardData {
     data: weeklyDistribution = [],
     isLoading: isLoadingWeekly,
     refetch: refetchWeekly,
-  } = useQuery<WeeklyJobData[], Error>({
+  } = useQuery<WeeklyWorkItem[], Error>({
     queryKey: ['weekly-distribution', filtros],
     queryFn: () => getWeeklyWorkDistribution(filtros),
     enabled: !!filtros && extratos.length > 0,
@@ -172,6 +175,19 @@ export function useDashboardData(filtros?: DashboardFiltros): DashboardData {
   } = useQuery<SalaryBreakdownItem[], Error>({
     queryKey: ['returns-data', filtros],
     queryFn: () => getReturnsData(filtros),
+    enabled: !!filtros && extratos.length > 0,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+  })
+
+  // Nova query: Distribuição por função
+  const {
+    data: functionDistribution = [],
+    isLoading: isLoadingFunctions,
+    refetch: refetchFunctions,
+  } = useQuery<FunctionDistributionItem[], Error>({
+    queryKey: ['function-distribution', filtros],
+    queryFn: () => getFunctionDistribution(filtros),
     enabled: !!filtros && extratos.length > 0,
     staleTime: 0,
     refetchOnWindowFocus: false,
@@ -228,7 +244,8 @@ export function useDashboardData(filtros?: DashboardFiltros): DashboardData {
     isLoadingShifts ||
     isLoadingWeekly ||
     isLoadingTopJobs ||
-    isLoadingReturns
+    isLoadingReturns ||
+    isLoadingFunctions
 
   // Função para refazer todas as consultas
   const refetch = async () => {
@@ -246,6 +263,7 @@ export function useDashboardData(filtros?: DashboardFiltros): DashboardData {
         refetchWeekly(),
         refetchTopJobs(),
         refetchReturns(),
+        refetchFunctions(), // Nova função de refetch
       ])
     }
   }
@@ -267,6 +285,7 @@ export function useDashboardData(filtros?: DashboardFiltros): DashboardData {
     topJobs,
     monthlyJobsData,
     returnsData,
+    functionDistribution, // Novos dados
     chartColors,
     isLoading,
     error: extratosError || null,
@@ -326,7 +345,10 @@ function processOperatorData(trabalhos: any[]): TomadorCardData[] {
  */
 function processMonthlyData(extratos: ExtratoResumo[]): ChartDataItem[] {
   // Contar por mês
-  const monthCounts: Record<string, { count: number; month: string }> = {}
+  const monthCounts: Record<
+    string,
+    { count: number; valorTotal: number; month: string }
+  > = {}
 
   extratos.forEach((extrato) => {
     const key = `${extrato.mes}/${extrato.ano}`
@@ -335,10 +357,12 @@ function processMonthlyData(extratos: ExtratoResumo[]): ChartDataItem[] {
       monthCounts[key] = {
         month: key,
         count: 0,
+        valorTotal: 0,
       }
     }
 
     monthCounts[key].count += extrato.totalTrabalhos
+    monthCounts[key].valorTotal += extrato.valorTotal
   })
 
   // Converter para array e ordenar por mês
@@ -346,12 +370,16 @@ function processMonthlyData(extratos: ExtratoResumo[]): ChartDataItem[] {
     .map((item) => ({
       name: item.month,
       value: item.count,
+      valorTotal: item.valorTotal,
+      // Adicionar média por trabalho
+      mediaValor: item.count > 0 ? item.valorTotal / item.count : 0,
     }))
     .sort((a, b) => a.name.localeCompare(b.name))
 }
 
 /**
  * Prepara dados de resumo (KPIs) para o dashboard
+ * Agora com suporte para contar domingos e feriados trabalhados
  */
 function prepareSummaryData(trabalhos: any[]): SummaryData {
   if (!trabalhos || trabalhos.length === 0) {
@@ -366,16 +394,42 @@ function prepareSummaryData(trabalhos: any[]): SummaryData {
 
   const totalFainas = trabalhos.length
 
+  // Identificar domingos e feriados trabalhados
+  // Usamos um conjunto (Set) para garantir que dias únicos sejam contados
+  const domFerTrabalhados = new Set()
+
+  trabalhos.forEach((trabalho) => {
+    const dia = trabalho.dia
+    const pagto = trabalho.pagto
+
+    // Extrair data completa
+    if (pagto && pagto.includes('/')) {
+      const [mes, ano] = pagto.split('/')
+      // Criar uma chave única para o dia
+      const dataKey = `${dia}/${mes}/${ano}`
+
+      // Verificar se é domingo ou feriado
+      // Aqui verificamos baseado em dados do backend que já marcam os domingos/feriados
+      // Esta lógica simples é apenas para ilustração, o backend contém a lógica completa
+      if (trabalho.isDomingo || trabalho.isFeriado) {
+        domFerTrabalhados.add(dataKey)
+      }
+    }
+  })
+
   // Count unique days worked
-  const diasTrabalhados = new Set(
-    trabalhos.map(
-      (t) =>
-        `${t.dia}/${t.pagto?.split('/')[0] || ''}/${t.pagto?.split('/')[1] || ''}`,
-    ),
-  ).size
+  const diasTrabalhados = domFerTrabalhados.size || 0
 
   // Calculate number of weeks based on unique days
-  const weeks = Math.ceil(diasTrabalhados / 7) || 1
+  const dateDiffs =
+    trabalhos.length > 0
+      ? Math.ceil(
+          (new Date(trabalhos[0].dataFinal).getTime() -
+            new Date(trabalhos[0].dataInicio).getTime()) /
+            (7 * 24 * 60 * 60 * 1000),
+        )
+      : 1
+  const weeks = Math.max(dateDiffs, 1)
 
   // Calculate averages
   const mediaBrutoFaina =

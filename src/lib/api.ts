@@ -319,3 +319,23 @@ const processAnaliseTomadoresFallback = async (
   // Retornar como array ordenado
   return Object.values(tomadores).sort((a, b) => b.valorTotal - a.valorTotal)
 }
+
+/**
+ * Função para obter distribuição por função
+ */
+export const getFunctionDistribution = async (
+  filtros?: DashboardFiltros,
+): Promise<any> => {
+  try {
+    const response: AxiosResponse<ApiResponse<any>> = await apiClient.get(
+      '/analise/funcoes',
+      {
+        params: filtros,
+      },
+    )
+    return response.data.data
+  } catch (error) {
+    console.error('Erro ao buscar distribuição por função:', error)
+    throw error
+  }
+}

@@ -122,14 +122,6 @@ export type TomadorCardData = {
   fainas: number
 }
 
-export type SummaryData = {
-  totalFainas: number
-  mediaFainasSemana: number
-  diasTrabalhados: number
-  mediaBrutoFaina: number
-  mediaLiquidoFaina: number
-}
-
 // Enums para meses e categorias
 export enum Categoria {
   ESTIVADOR = 'ESTIVADOR',
@@ -151,4 +143,26 @@ export enum Mes {
   OUT = 'OUT',
   NOV = 'NOV',
   DEZ = 'DEZ',
+}
+
+export interface FunctionDistributionItem {
+  name: string
+  code: string
+  value: number
+  totalValue: number
+}
+
+// Atualizando o tipo SummaryData para incluir dados de domingos/feriados
+export interface SummaryData {
+  totalFainas: number
+  mediaFainasSemana: number
+  diasTrabalhados: number // Agora representa "Dom/Fer Trabalhados"
+  mediaBrutoFaina: number
+  mediaLiquidoFaina: number
+}
+
+// Atualização do tipo WeeklyWorkItem para suportar múltiplos meses
+export interface WeeklyWorkItem {
+  week: string
+  [monthKey: string]: string | number // Chaves para cada mês/ano (ex: "JAN/2024")
 }

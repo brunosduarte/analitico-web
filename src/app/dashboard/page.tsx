@@ -27,14 +27,15 @@ import {
   ShiftDistribution,
   JobValue,
   TopJobs,
-  CategoryDistribution,
 } from '@/components/dashboard/charts'
+
+// Componente para aba de funções (novo)
+import { FunctionDistribution } from '@/components/dashboard/function/function-distribution'
 
 // Importar o componente reutilizado do detalhe de extrato
 import { TrabalhoChart } from '@/components/charts/trabalho-chart'
 
 import { DashboardTomadorSection } from '@/components/dashboard/tomador/tomador-section'
-import { DashboardCategorySection } from '@/components/dashboard/category/category-section'
 
 /**
  * Dashboard Page: Página principal do dashboard
@@ -78,8 +79,8 @@ export default function DashboardPage() {
     weeklyDistribution,
     monthlyJobsData,
     tomadoresData,
-    categoriasTotais,
     trabalhos,
+    functionDistribution,
     extratos,
     refetch,
   } = useDashboardData(filtros)
@@ -216,7 +217,7 @@ export default function DashboardPage() {
       <Tabs defaultValue="geral">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="geral">Visão Geral</TabsTrigger>
-          <TabsTrigger value="categorias">Por Categoria</TabsTrigger>
+          <TabsTrigger value="funcoes">Por Função</TabsTrigger>
           <TabsTrigger value="tomadores">Por Tomador</TabsTrigger>
         </TabsList>
 
@@ -247,17 +248,13 @@ export default function DashboardPage() {
             <JobValue trabalhos={trabalhos} />
             <TopJobs trabalhos={trabalhos} />
           </div>
-
-          <div className="grid grid-cols-1 gap-4">
-            <CategoryDistribution data={categoriasTotais} />
-          </div>
         </TabsContent>
 
-        {/* Tab de Categorias */}
-        <TabsContent value="categorias" className="space-y-4">
-          <DashboardCategorySection
-            categoriasTotais={categoriasTotais}
-            shiftDistribution={salaryBreakdown}
+        {/* Tab de Funções (Nova) */}
+        <TabsContent value="funcoes" className="space-y-4">
+          <FunctionDistribution
+            functionData={functionDistribution}
+            trabalhos={trabalhos}
           />
         </TabsContent>
 

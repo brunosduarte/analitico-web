@@ -123,3 +123,28 @@ export const API_CONFIG = {
   TIMEOUT: 30000, // 30 segundos
   RETRY_ATTEMPTS: 3,
 }
+
+export const FUNCTION_NAMES: Record<string, string> = {
+  '101': 'CM Geral',
+  '103': 'CM Porão',
+  '104': 'CM Conexo',
+  '431': 'Motorista VL',
+  '521': 'Operador PC',
+  '527': 'Operador EH',
+  '801': 'Soldado',
+  '802': 'Sinaleiro',
+  '803': 'Conexo',
+}
+
+// Feriados nacionais fixos (formato: DD/MM)
+export const FERIADOS_NACIONAIS_FIXOS = [
+  '01/01', // Confraternização Universal
+  '21/04', // Tiradentes
+  '01/05', // Dia do Trabalho
+  '07/09', // Independência
+  '12/10', // Nossa Senhora Aparecida
+  '02/11', // Finados
+  '15/11', // Proclamação da República
+  '20/11', // Consciência Negra
+  '25/12', // Natal
+]
