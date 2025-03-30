@@ -23,6 +23,7 @@ import {
 import { DashboardFiltros } from '@/types/api'
 import { useExtratoPeriodos } from './use-extratos'
 import { generateChartColors } from '@/lib/utils'
+import { MESES_ORDEM } from '@/lib/constants'
 
 /**
  * Interface de retorno do hook useDashboardData
@@ -46,13 +47,25 @@ interface DashboardData {
   isLoading: boolean
   error: Error | null
   refetch: () => Promise<any> // Função para recarregar dados
+  allExtratos: ExtratoResumo[] // Todos os extratos disponíveis sem filtro
 }
 
 /**
  * Hook para obter dados do dashboard
  */
 export function useDashboardData(filtros?: DashboardFiltros): DashboardData {
-  // Buscar todos os extratos para análise
+  // Buscar todos os extratos sem filtro para ter uma lista completa disponível
+  const { data: allExtratos = [], isLoading: isLoadingAllExtratos } = useQuery<
+    ExtratoResumo[],
+    Error
+  >({
+    queryKey: ['extratos-all'],
+    queryFn: () => getExtratos(), // Chamada sem filtros para obter todos
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    refetchOnWindowFocus: false,
+  })
+
+  // Buscar todos os extratos para análise com os filtros fornecidos
   const {
     data: extratos = [],
     isLoading: isLoadingExtratos,
@@ -238,6 +251,7 @@ export function useDashboardData(filtros?: DashboardFiltros): DashboardData {
 
   // Final isLoading state
   const isLoading =
+    isLoadingAllExtratos ||
     isLoadingExtratos ||
     isLoadingDetails ||
     isLoadingSalary ||
@@ -273,6 +287,7 @@ export function useDashboardData(filtros?: DashboardFiltros): DashboardData {
 
   return {
     extratos,
+    allExtratos,
     detailedData,
     trabalhos,
     periodos,
@@ -343,12 +358,26 @@ function processOperatorData(trabalhos: any[]): TomadorCardData[] {
 /**
  * Processar dados mensais para gráficos
  */
+/**
+ * Processar dados mensais para gráficos
+ * Corrigida para ordenar corretamente por mês/ano
+ */
 function processMonthlyData(extratos: ExtratoResumo[]): ChartDataItem[] {
-  // Contar por mês
-  const monthCounts: Record<
-    string,
-    { count: number; valorTotal: number; month: string }
-  > = {}
+  if (!extratos || extratos.length === 0) {
+    return []
+  }
+
+  // Definir interface para o objeto de contagem mensal
+  interface MonthCount {
+    count: number
+    valorTotal: number
+    month: string
+    mes: string
+    ano: string
+  }
+
+  // Agrupar por mês/ano
+  const monthCounts: Record<string, MonthCount> = {}
 
   extratos.forEach((extrato) => {
     const key = `${extrato.mes}/${extrato.ano}`
@@ -356,6 +385,8 @@ function processMonthlyData(extratos: ExtratoResumo[]): ChartDataItem[] {
     if (!monthCounts[key]) {
       monthCounts[key] = {
         month: key,
+        mes: extrato.mes,
+        ano: extrato.ano,
         count: 0,
         valorTotal: 0,
       }
@@ -365,16 +396,30 @@ function processMonthlyData(extratos: ExtratoResumo[]): ChartDataItem[] {
     monthCounts[key].valorTotal += extrato.valorTotal
   })
 
-  // Converter para array e ordenar por mês
-  return Object.values(monthCounts)
-    .map((item) => ({
-      name: item.month,
-      value: item.count,
-      valorTotal: item.valorTotal,
-      // Adicionar média por trabalho
-      mediaValor: item.count > 0 ? item.valorTotal / item.count : 0,
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name))
+  // Converter para array
+  const result = Object.values(monthCounts).map((item) => ({
+    name: item.month,
+    value: item.count,
+    valorTotal: item.valorTotal,
+    mes: item.mes,
+    ano: item.ano,
+    // Adicionar média por trabalho
+    mediaValor: item.count > 0 ? item.valorTotal / item.count : 0,
+  }))
+
+  // Ordenar adequadamente: primeiro por ano, depois por mês usando o índice em MESES_ORDEM
+  return result.sort((a, b) => {
+    // Primeiro comparar por ano
+    if (a.ano !== b.ano) {
+      return parseInt(a.ano) - parseInt(b.ano)
+    }
+
+    // Depois comparar por mês usando a ordem definida em MESES_ORDEM
+    const mesAIndex = MESES_ORDEM.indexOf(a.mes)
+    const mesBIndex = MESES_ORDEM.indexOf(b.mes)
+
+    return mesAIndex - mesBIndex
+  })
 }
 
 /**

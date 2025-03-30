@@ -16,7 +16,7 @@ import {
 import { SummaryCards } from '@/components/dashboard/summary-cards'
 import { format } from 'date-fns'
 import { DashboardFiltros } from '@/types/api'
-import { MESES_ABREV } from '@/lib/constants'
+import { MESES_ABREV, MESES_ORDEM } from '@/lib/constants'
 
 // Componentes de Gráficos
 import {
@@ -69,7 +69,7 @@ export default function DashboardPage() {
     dataFim: dateRange.to ? format(dateRange.to, 'yyyy-MM-dd') : undefined,
   }
 
-  // Obter dados do dashboard com base no período selecionado
+  // Hook para obter dados do dashboard com base no período selecionado
   const {
     isLoading,
     error,
@@ -83,6 +83,7 @@ export default function DashboardPage() {
     functionDistribution,
     extratos,
     refetch,
+    allExtratos, // Todos os extratos disponíveis sem filtro de período
   } = useDashboardData(filtros)
 
   // Efeito para marcar quando o carregamento inicial termina
@@ -99,6 +100,52 @@ export default function DashboardPage() {
       refetch()
     }
   }, [isInitialLoad, refetch])
+
+  // Efeito para verificar se há dados no período atual e ajustar conforme necessário
+  useEffect(() => {
+    // Se não houver dados no período selecionado, mas existirem extratos em outros períodos
+    if (
+      !isLoading &&
+      !isInitialLoad &&
+      extratos.length === 0 &&
+      allExtratos?.length > 0
+    ) {
+      console.log(
+        'Sem dados no período atual, mas existem extratos em outros períodos',
+      )
+
+      // Encontrar o extrato mais recente para definir o período
+      const latestExtrato = [...allExtratos].sort((a, b) => {
+        // Primeiro ordenar por ano (decrescente)
+        if (a.ano !== b.ano) return parseInt(b.ano) - parseInt(a.ano)
+
+        // Depois ordenar por mês (decrescente) usando a ordem dos meses no array MESES_ORDEM
+        const indexA = MESES_ORDEM.indexOf(a.mes)
+        const indexB = MESES_ORDEM.indexOf(b.mes)
+        return indexB - indexA
+      })[0]
+
+      if (latestExtrato) {
+        console.log(
+          'Definindo novo período com base no extrato mais recente:',
+          latestExtrato.mes,
+          latestExtrato.ano,
+        )
+
+        // Obter primeiro e último dia do mês do extrato mais recente
+        const mesNumerico = MESES_ORDEM.indexOf(latestExtrato.mes)
+        const anoNumerico = parseInt(latestExtrato.ano)
+
+        // Criar datas para o início e fim do mês
+        const from = new Date(anoNumerico, mesNumerico, 1)
+        const to = new Date(anoNumerico, mesNumerico + 1, 0) // O dia 0 do próximo mês é o último dia do mês atual
+
+        // Atualizar o período selecionado
+        const newRange = { from, to }
+        handlePeriodChange(newRange)
+      }
+    }
+  }, [isLoading, isInitialLoad, extratos, allExtratos])
 
   // Função para atualizar o período selecionado
   const handlePeriodChange = (range: DateRange) => {
@@ -129,36 +176,46 @@ export default function DashboardPage() {
 
   // Verificação explícita para extratos vazios
   const hasData = extratos && extratos.length > 0
+  const hasAnyData = allExtratos && allExtratos.length > 0
 
   // Se não houver dados, mostrar estado vazio
   if (!hasData) {
-    return (
-      <EmptyState
-        title="Nenhum dado encontrado"
-        description="Não há dados disponíveis para o período selecionado. Tente selecionar outro período ou fazer upload de novos extratos."
-        icon={EmptyTypes.NO_DATA.icon}
-        action={{
-          label: 'Mudar Período',
-          onClick: () => {
-            // Definir para os últimos 6 meses
-            const today = new Date()
-            const sixMonthsAgo = new Date()
-            sixMonthsAgo.setMonth(today.getMonth() - 6)
-
-            const newRange = {
-              from: new Date(
-                sixMonthsAgo.getFullYear(),
-                sixMonthsAgo.getMonth(),
-                1,
-              ),
-              to: new Date(today.getFullYear(), today.getMonth() + 1, 0),
-            }
-
-            handlePeriodChange(newRange)
-          },
-        }}
-      />
-    )
+    if (hasAnyData) {
+      // Se existem dados em outros períodos, mostrar mensagem específica
+      return (
+        <EmptyState
+          title="Nenhum dado encontrado no período selecionado"
+          description="Não há dados disponíveis para o período atual. Estamos ajustando para mostrar os extratos existentes."
+          icon={EmptyTypes.NO_DATA.icon}
+          action={{
+            label: 'Carregar Todos os Dados',
+            onClick: () => {
+              // Buscar todos os dados sem filtro de período
+              const range = {
+                from: new Date(2000, 0, 1), // 1 de Janeiro de 2000
+                to: new Date(), // Hoje
+              }
+              handlePeriodChange(range)
+            },
+          }}
+        />
+      )
+    } else {
+      // Se não existem dados em nenhum período
+      return (
+        <EmptyState
+          title="Nenhum dado encontrado"
+          description="Não há extratos disponíveis. Por favor, faça o upload de novos extratos."
+          icon={EmptyTypes.NO_DATA.icon}
+          action={{
+            label: 'Ir para Upload',
+            onClick: () => {
+              window.location.href = '/upload'
+            },
+          }}
+        />
+      )
+    }
   }
 
   // Se não houver trabalhos, mostrar estado vazio específico para trabalhos
