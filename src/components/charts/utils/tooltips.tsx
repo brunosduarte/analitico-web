@@ -88,9 +88,17 @@ export function ShiftTooltip({ active, payload }: TooltipProps) {
  */
 export function WorkTooltip({ active, payload, label }: TooltipProps) {
   if (active && payload && payload.length) {
+    const item = payload[0].payload
+
     return (
       <div className="bg-background border rounded-md shadow-md p-3">
-        <p className="font-medium">Trabalho: {label}</p>
+        <p className="font-medium">{item.pasta || label}</p>
+        <p className="text-sm text-muted-foreground">
+          Data: {item.dataCompleta || 'N/A'}
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Turno: {item.turno || 'N/A'}
+        </p>
         <p className="text-sm text-muted-foreground">
           Valor: {formatCurrency(payload[0].value)}
         </p>

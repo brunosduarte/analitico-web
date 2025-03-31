@@ -92,14 +92,61 @@ export const CATEGORIAS_CORES: Record<string, string> = {
 
 // Cores para gráficos
 export const CHART_COLORS = [
-  '#2563eb', // blue-600
-  '#10b981', // emerald-500
-  '#8b5cf6', // violet-500
-  '#f59e0b', // amber-500
-  '#ef4444', // red-500
-  '#ec4899', // pink-500
-  '#6366f1', // indigo-500
-  '#14b8a6', // teal-500
+  // classic
+  '#4046CA',
+  '#0FB5AE',
+  '#F68512',
+  '#DE3D82',
+  '#7E84FA',
+  '#72E06A',
+  '#147AF4',
+  '#7327D3',
+  '#E8C600',
+  '#CB5E00',
+  '#008F5D',
+  '#BCE930',
+
+  // //wheel
+  // '#F3E339',
+  // '#FDC434',
+  // '#F18C2F',
+  // '#E8602B',
+  // '#E22028',
+  // '#C40B7B',
+  // '#6C3C88',
+  // '#445096',
+  // '#2B73AC',
+  // '#1197B9',
+  // '#0F8E5D',
+  // '#8EBA3A',
+
+  // //sepia
+  // '#7BBC9A',
+  // '#478DB8',
+  // '#E9BA5C',
+  // '#E46E53',
+  // '#9C71C6',
+  // '#6CBDDF',
+  // '#757595',
+  // '#B07C4F',
+  // '#A59F9C',
+  // '#B0D364',
+  // '#9D5373',
+  // '#DF7172',
+
+  // vivid
+  // '#2563eb', // blue-600
+  // '#10b981', // emerald-500
+  // '#8b5cf6', // violet-500
+  // '#f59e0b', // amber-500
+  // '#ef4444', // red-500
+  // '#06b6d4', // cyan-500
+  // '#ec4899', // pink-500
+  // '#6366f1', // indigo-500
+  // '#14b8a6', // teal-500
+  // '#84cc16', // lime-500
+  // '#0ea5e9', // sky-500
+  // '#f97316', // orange-500
 ]
 
 // Limites para uploads
@@ -136,7 +183,6 @@ export const FUNCTION_NAMES: Record<string, string> = {
   '803': 'Conexo',
 }
 
-// Feriados nacionais fixos (formato: DD/MM)
 export const FERIADOS_NACIONAIS_FIXOS = [
   '01/01', // Confraternização Universal
   '21/04', // Tiradentes
@@ -148,3 +194,23 @@ export const FERIADOS_NACIONAIS_FIXOS = [
   '20/11', // Consciência Negra
   '25/12', // Natal
 ]
+
+export interface FeriadosAnuais {
+  [ano: string]: string[]
+}
+
+export const FERIADOS_NACIONAIS_MOVEIS: FeriadosAnuais = {
+  '2022': [
+    '01/03', // Carnaval
+    '15/04', // Sexta-feira Santa
+    '17/04', // Páscoa
+    '08/05', // Dia das Mães
+    '16/06', // Corpus Christi
+    '14/08', // Dia dos Pais
+  ],
+  '2023': ['21/02', '07/04', '09/04', '14/05', '08/06', '13/08'],
+  '2024': ['13/02', '29/03', '31/03', '12/05', '30/05', '11/08'],
+  '2025': ['04/03', '18/04', '20/04', '11/05', '19/06', '10/08'],
+  '2026': ['17/02', '03/04', '05/04', '10/05', '04/06', '09/08'],
+  '2027': ['09/02', '26/00', '28/03', '27/05', '09/05', '08/08'],
+}

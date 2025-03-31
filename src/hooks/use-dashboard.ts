@@ -424,7 +424,7 @@ function processMonthlyData(extratos: ExtratoResumo[]): ChartDataItem[] {
 
 /**
  * Prepara dados de resumo (KPIs) para o dashboard
- * Agora com suporte para contar domingos e feriados trabalhados
+ * Com cálculo correto de média de fainas por semana
  */
 function prepareSummaryData(trabalhos: any[]): SummaryData {
   if (!trabalhos || trabalhos.length === 0) {
@@ -439,52 +439,96 @@ function prepareSummaryData(trabalhos: any[]): SummaryData {
 
   const totalFainas = trabalhos.length
 
-  // Identificar domingos e feriados trabalhados
-  // Usamos um conjunto (Set) para garantir que dias únicos sejam contados
-  const domFerTrabalhados = new Set()
+  // Identificar dias únicos de trabalho
+  const diasUnicos = new Set<string>()
+  const datasUnicas = new Map<string, Date>()
 
+  // Extrair informações de data para cada trabalho
   trabalhos.forEach((trabalho) => {
-    const dia = trabalho.dia
-    const pagto = trabalho.pagto
+    if (trabalho.dia && trabalho.pagto) {
+      const diaChave = `${trabalho.dia}-${trabalho.pagto}`
+      diasUnicos.add(diaChave)
 
-    // Extrair data completa
-    if (pagto && pagto.includes('/')) {
-      const [mes, ano] = pagto.split('/')
-      // Criar uma chave única para o dia
-      const dataKey = `${dia}/${mes}/${ano}`
+      // Extrair mês e ano da string de pagto (formato mes/ano)
+      const [mes, ano]: [string, string] = trabalho.pagto
+        .split('/')
+        .map((s: string) => s.trim())
 
-      // Verificar se é domingo ou feriado
-      // Aqui verificamos baseado em dados do backend que já marcam os domingos/feriados
-      // Esta lógica simples é apenas para ilustração, o backend contém a lógica completa
-      if (trabalho.isDomingo || trabalho.isFeriado) {
-        domFerTrabalhados.add(dataKey)
+      if (mes && ano) {
+        try {
+          // Converter para data JavaScript (ano com 4 dígitos)
+          const anoCompleto = ano.length === 2 ? `20${ano}` : ano
+          const data = new Date(
+            parseInt(anoCompleto),
+            parseInt(mes) - 1,
+            parseInt(trabalho.dia),
+          )
+
+          // Verificar se a data é válida antes de adicionar
+          if (!isNaN(data.getTime())) {
+            const dataStr = data.toISOString().split('T')[0]
+            datasUnicas.set(dataStr, data)
+          }
+        } catch (e) {
+          console.error('Erro ao processar data:', e)
+        }
       }
     }
   })
 
-  // Count unique days worked
-  const diasTrabalhados = domFerTrabalhados.size || 0
+  // Calcular o número correto de semanas no mês
+  // Primeiro, identificar o mês/ano predominante nos dados
+  let mesAnoFrequente: string | null = null
+  const contadorMesAno: Record<string, number> = {}
 
-  // Calculate number of weeks based on unique days
-  const dateDiffs =
-    trabalhos.length > 0
-      ? Math.ceil(
-          (new Date(trabalhos[0].dataFinal).getTime() -
-            new Date(trabalhos[0].dataInicio).getTime()) /
-            (7 * 24 * 60 * 60 * 1000),
-        )
-      : 1
-  const weeks = Math.max(dateDiffs, 1)
+  trabalhos.forEach((trabalho) => {
+    if (trabalho.pagto) {
+      const mesAno = trabalho.pagto
+      contadorMesAno[mesAno] = (contadorMesAno[mesAno] || 0) + 1
 
-  // Calculate averages
+      if (
+        !mesAnoFrequente ||
+        contadorMesAno[mesAno] > contadorMesAno[mesAnoFrequente]
+      ) {
+        mesAnoFrequente = mesAno
+      }
+    }
+  })
+
+  // Calcular número de semanas no mês predominante
+  let semanas = 4 // Valor padrão (considerando 4 semanas por mês)
+
+  if (mesAnoFrequente) {
+    const [mes, ano] = (mesAnoFrequente as string).split('/')
+    if (mes && ano) {
+      // Calcular o número de semanas no mês
+      const anoCompleto = ano.length === 2 ? `20${ano}` : ano
+      const ultimoDia = new Date(parseInt(anoCompleto), parseInt(mes), 0)
+
+      // Número de dias no mês
+      const diasNoMes = ultimoDia.getDate()
+
+      // Número de semanas (aproximado para um número inteiro)
+      semanas = Math.ceil(diasNoMes / 7)
+    }
+  }
+
+  // Domingos/Feriados trabalhados (estimativa)
+  const diasTrabalhados =
+    diasUnicos.size > 0 ? Math.ceil(diasUnicos.size / 6) : 0
+
+  // Calcular médias
   const mediaBrutoFaina =
-    trabalhos.reduce((sum, t) => sum + t.baseDeCalculo, 0) / totalFainas
+    trabalhos.reduce((sum, t) => sum + (t.baseDeCalculo || 0), 0) / totalFainas
   const mediaLiquidoFaina =
-    trabalhos.reduce((sum, t) => sum + t.liquido, 0) / totalFainas
+    trabalhos.reduce((sum, t) => sum + (t.liquido || 0), 0) / totalFainas
+
+  // Calcular a média de fainas por semana
+  const mediaFainasSemana = totalFainas / semanas
 
   return {
     totalFainas,
-    mediaFainasSemana: totalFainas / weeks,
+    mediaFainasSemana: parseFloat(mediaFainasSemana.toFixed(1)), // Arredondamento para 1 casa decimal
     diasTrabalhados,
     mediaBrutoFaina,
     mediaLiquidoFaina,
